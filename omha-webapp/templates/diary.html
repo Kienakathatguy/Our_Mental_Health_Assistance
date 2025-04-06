@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card shadow-sm p-4 mb-4 bg-white rounded">
+    <h2 class="mb-3 text-primary">📝 Ghi chép cảm xúc của bạn</h2>
+    <form method="post">
+        <textarea class="form-control mb-3 p-3" name="entry" rows="6"
+            placeholder="Bạn đang cảm thấy thế nào? Hãy viết ra nhé..." required
+            style="resize: vertical; font-size: 16px; background-color: #fefefe;"></textarea>
+        <button class="btn btn-success">Lưu nhật ký</button>
+    </form>
+</div>
+
+<hr class="my-4">
+
+<h4 class="mb-3 text-secondary">📚 Các ghi chép gần đây</h4>
+{% for entry in entries %}
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <strong>Ngày ghi:</strong> {{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}
+        </div>
+        <div class="card-body">
+            <p style="white-space: pre-wrap;">{{ entry.content }}</p>
+        </div>
+    </div>
+{% endfor %}
+
+{% endblock %}

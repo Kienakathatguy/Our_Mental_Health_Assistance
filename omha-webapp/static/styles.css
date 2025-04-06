@@ -1,0 +1,21 @@
+/* Đảm bảo footer luôn dưới cùng */
+html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1;
+}
+
+footer {
+    background-color: #f0f0f0;
+    text-align: center;
+    padding: 15px 0;
+    font-size: 14px;
+    color: #555;
+}
