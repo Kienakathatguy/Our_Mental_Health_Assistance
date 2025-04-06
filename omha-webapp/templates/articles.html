@@ -1,9 +1,28 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h3>Bài viết truyền cảm hứng</h3>
-<ul class="list-group">
-    <li class="list-group-item">🌟 Làm sao để vượt qua ngày tồi tệ?</li>
-    <li class="list-group-item">🧠 5 điều cần nhớ về sức khỏe tâm lý</li>
-    <li class="list-group-item">🤝 Khi bạn cần ai đó để lắng nghe</li>
-</ul>
+<!-- Articles Page Header -->
+<div class="card shadow-sm p-4 mb-4 bg-white rounded">
+    <h2 class="mb-3 text-primary">📰 Các Bài Viết & Video Truyền Cảm Hứng</h2>
+    <p>Khám phá những bài viết, video, và câu chuyện giúp bạn hiểu hơn về tâm lý người trẻ và cách giải quyết các vấn đề sức khỏe tâm lý.</p>
+</div>
+
+<hr class="my-4">
+
+<!-- Articles List -->
+<div class="row">
+    {% for article in articles %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <img src="{{ article.image_url }}" class="card-img-top" alt="{{ article.title }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ article.title }}</h5>
+                    <p class="card-text">{{ article.short_description }}</p>
+                    <a href="{{ url_for('view_article', article_id=article.id) }}" class="btn btn-primary">Xem chi tiết</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
 {% endblock %}

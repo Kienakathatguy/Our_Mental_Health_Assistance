@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
-from models import db, User, DiaryEntry, ForumPost, Comment
+from models import db, User, DiaryEntry, ForumPost, Comment, Article, Video
 from flask_bcrypt import Bcrypt
 import os
 from werkzeug.utils import secure_filename
@@ -152,7 +152,18 @@ def chat():
 
 @app.route("/articles")
 def articles():
-    return render_template("articles.html")
+    articles = Article.query.order_by(Article.date_posted.desc()).all()
+    videos = Video.query.order_by(Video.date_posted.desc()).all()
+    
+    # Kết hợp bài viết và video lại thành một danh sách (tùy theo nhu cầu, có thể sắp xếp chung)
+    all_content = articles + videos
+
+    return render_template("articles.html", all_content=all_content)
+
+@app.route("/article/<int:article_id>")
+def view_article(article_id):
+    article = Article.query.get_or_404(article_id)
+    return render_template("view_article.html", article=article)
 
 @app.route("/chatbot", methods=["GET", "POST"])
 def chatbot():
