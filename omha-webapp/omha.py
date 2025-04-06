@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -7,8 +10,6 @@ from flask_bcrypt import Bcrypt
 import os
 from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO, emit, join_room
-import eventlet
-eventlet.monkey_patch()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysecretkey'
@@ -148,20 +149,6 @@ def view_post(post_id):
 
     # Nếu là yêu cầu GET (hiển thị bài viết và bình luận)
     return render_template('view_post.html', post=post, comments=comments)
-
-
-@app.route("/chat", methods=["GET", "POST"])
-def chat():
-    if request.method == "POST":
-        # Nhận tin nhắn từ người dùng
-        message_content = request.form["message"]
-        new_message = Message(sender=current_user.username, content=message_content)
-        db.session.add(new_message)
-        db.session.commit()
-
-    # Lấy tất cả tin nhắn từ cơ sở dữ liệu
-    messages = Message.query.all()
-    return render_template("chat.html", messages=messages)
 
 @app.route("/articles")
 def articles():
