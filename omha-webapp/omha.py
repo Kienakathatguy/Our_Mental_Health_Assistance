@@ -14,12 +14,32 @@ def home():
 def diary():
     if request.method == "POST":
         content = request.form["entry"]
-        new_entry = DiaryEntry(content=content)
+        emotion = request.form.get("emotion", "")
+        new_entry = DiaryEntry(content=content, emotion=emotion)
         db.session.add(new_entry)
         db.session.commit()
         return redirect("/diary")
-    entries = DiaryEntry.query.order_by(DiaryEntry.id.desc()).all()
+
+    entries = DiaryEntry.query.order_by(DiaryEntry.created_at.desc()).all()
     return render_template("diary.html", entries=entries)
+
+@app.route("/diary/edit/<int:id>", methods=["GET", "POST"])
+def edit_diary(id):
+    entry = DiaryEntry.query.get_or_404(id)
+    if request.method == "POST":
+        entry.content = request.form["entry"]
+        entry.emotion = request.form.get("emotion", entry.emotion)
+        db.session.commit()
+        return redirect("/diary")
+    return render_template("edit_diary.html", entry=entry)
+
+@app.route("/diary/delete/<int:id>")
+def delete_diary(id):
+    entry = DiaryEntry.query.get_or_404(id)
+    db.session.delete(entry)
+    db.session.commit()
+    return redirect("/diary")
+
 
 @app.route("/forum", methods=["GET", "POST"])
 def forum():

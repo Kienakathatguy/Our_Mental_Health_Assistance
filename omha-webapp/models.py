@@ -6,6 +6,7 @@ db = SQLAlchemy()
 class DiaryEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
+    emotion = db.Column(db.String(20))  # 👈 Thêm cảm xúc
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class ForumPost(db.Model):

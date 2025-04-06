@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card shadow-sm p-4 mb-4 bg-white rounded">
+    <h2 class="mb-3 text-primary">📝 Chỉnh sửa ghi chép</h2>
+    <form method="post">
+        <label class="mb-1">🌈 Cảm xúc:</label>
+        <select name="emotion" class="form-select mb-3">
+            <option value="🙂" {% if entry.emotion == "🙂" %}selected{% endif %}>Vui vẻ 🙂</option>
+            <option value="😢" {% if entry.emotion == "😢" %}selected{% endif %}>Buồn 😢</option>
+            <option value="😡" {% if entry.emotion == "😡" %}selected{% endif %}>Tức giận 😡</option>
+            <option value="😨" {% if entry.emotion == "😨" %}selected{% endif %}>Lo lắng 😨</option>
+            <option value="😴" {% if entry.emotion == "😴" %}selected{% endif %}>Mệt mỏi 😴</option>
+            <option value="❤️" {% if entry.emotion == "❤️" %}selected{% endif %}>Biết ơn ❤️</option>
+        </select>
+
+        <textarea class="form-control mb-3 p-3" name="entry" rows="6" required>{{ entry.content }}</textarea>
+        <button class="btn btn-primary">💾 Cập nhật</button>
+        <a href="/diary" class="btn btn-secondary">Quay lại</a>
+    </form>
+</div>
+
+{% endblock %}

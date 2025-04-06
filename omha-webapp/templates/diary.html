@@ -4,9 +4,18 @@
 <div class="card shadow-sm p-4 mb-4 bg-white rounded">
     <h2 class="mb-3 text-primary">📝 Ghi chép cảm xúc của bạn</h2>
     <form method="post">
+        <label class="mb-1">🌤️ Bạn đang cảm thấy thế nào?</label>
+        <select name="emotion" class="form-select mb-3">
+            <option value="🙂">Vui vẻ 🙂</option>
+            <option value="😢">Buồn 😢</option>
+            <option value="😡">Tức giận 😡</option>
+            <option value="😨">Lo lắng 😨</option>
+            <option value="😴">Mệt mỏi 😴</option>
+            <option value="❤️">Biết ơn ❤️</option>
+        </select>
+    
         <textarea class="form-control mb-3 p-3" name="entry" rows="6"
-            placeholder="Bạn đang cảm thấy thế nào? Hãy viết ra nhé..." required
-            style="resize: vertical; font-size: 16px; background-color: #fefefe;"></textarea>
+            placeholder="Bạn đang cảm thấy gì?..." required></textarea>
         <button class="btn btn-success">Lưu nhật ký</button>
     </form>
 </div>
@@ -16,11 +25,14 @@
 <h4 class="mb-3 text-secondary">📚 Các ghi chép gần đây</h4>
 {% for entry in entries %}
     <div class="card mb-3">
-        <div class="card-header bg-light">
-            <strong>Ngày ghi:</strong> {{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}
+        <div class="card-header bg-light d-flex justify-content-between">
+            <div><strong>🗓️</strong> {{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+            <div><strong>{{ entry.emotion }}</strong></div>
         </div>
         <div class="card-body">
             <p style="white-space: pre-wrap;">{{ entry.content }}</p>
+            <a href="/diary/edit/{{ entry.id }}" class="btn btn-sm btn-outline-primary">✏️ Sửa</a>
+            <a href="/diary/delete/{{ entry.id }}" class="btn btn-sm btn-outline-danger">🗑️ Xóa</a>
         </div>
     </div>
 {% endfor %}
