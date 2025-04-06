@@ -1,11 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>Chatbot tâm lý (demo)</h3>
-<form method="post">
-    <input class="form-control mb-2" name="message" placeholder="Nói gì đó..." required>
-    <button class="btn btn-dark">Gửi</button>
-</form>
-{% if reply %}
-<div class="alert alert-info mt-3">{{ reply }}</div>
-{% endif %}
+<div class="container mt-5">
+    <div class="card shadow-sm p-4 bg-white rounded">
+        <h2 class="text-primary mb-4">🤖 Chatbot hỗ trợ tâm lý</h2>
+        
+        {% if reply %}
+            <div class="alert alert-info">
+                <strong>Chatbot:</strong> {{ reply }}
+            </div>
+        {% endif %}
+        
+        <form method="POST">
+            <div class="form-group mb-3">
+                <label for="message">Bạn muốn tâm sự điều gì? 💬</label>
+                <textarea class="form-control" name="message" rows="4" placeholder="Mình đang cảm thấy..."></textarea>
+            </div>
+            <button class="btn btn-primary">Gửi 💌</button>
+        </form>
+    </div>
+</div>
 {% endblock %}

@@ -167,7 +167,7 @@ def view_article(article_id):
 
 @app.route("/video")
 def video():
-    return render_template("room.html")
+    return render_template("video_call.html")
 
 @socketio.on("join")
 def handle_join(data):

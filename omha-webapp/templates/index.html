@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-primary">📞 Chọn bạn bè để gọi video</h2>
+
+    <div class="card shadow-sm p-4 mb-4 bg-white rounded">
+        <h4 class="mb-3 text-secondary">🔗 Danh sách bạn bè</h4>
+        <div class="d-flex flex-column">
+            <!-- Example buttons for calling -->
+            <button class="btn btn-outline-primary mb-3" onclick="startVideoCall('user1')">Gọi User 1</button>
+            <button class="btn btn-outline-primary mb-3" onclick="startVideoCall('user2')">Gọi User 2</button>
+            <button class="btn btn-outline-primary mb-3" onclick="startVideoCall('user3')">Gọi User 3</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+<script>
+    const socket = io.connect('http://localhost:5000');
+
+    function startVideoCall(user) {
+        window.location.href = `/video_call?user=${user}`;
+    }
+</script>
+
+{% endblock %}
