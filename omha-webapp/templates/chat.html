@@ -1,5 +1,31 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h3>Phòng trò chuyện (demo)</h3>
-<p>Chức năng trò chuyện video sẽ được tích hợp sau, hiện tại bạn có thể tưởng tượng đây là không gian an toàn để chia sẻ 🧡</p>
+<!-- Chat Header -->
+<div class="card shadow-sm p-4 mb-4 bg-white rounded">
+    <h2 class="mb-3 text-primary">🗣️ Trò chuyện với chuyên gia hoặc bạn bè</h2>
+    <p>Hãy chia sẻ và trò chuyện để tìm sự an ủi hoặc lời khuyên.</p>
+</div>
+
+<!-- Chat Box -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="chat-box" id="chat-box" style="height: 400px; overflow-y: scroll;">
+            {% for message in messages %}
+                <div class="message">
+                    <strong>{{ message.sender }}:</strong> <span>{{ message.content }}</span>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Send Message Form -->
+        <form id="chat-form" method="POST">
+            <div class="input-group">
+                <input type="text" class="form-control" name="message" placeholder="Nhập tin nhắn của bạn..." required>
+                <button class="btn btn-primary" type="submit">Gửi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {% endblock %}

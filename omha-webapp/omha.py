@@ -6,6 +6,9 @@ from models import db, User, DiaryEntry, ForumPost, Comment, Article, Video
 from flask_bcrypt import Bcrypt
 import os
 from werkzeug.utils import secure_filename
+from flask_socketio import SocketIO, emit, join_room
+import eventlet
+eventlet.monkey_patch()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysecretkey'
@@ -13,6 +16,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db.init_app(app)
 bcrypt = Bcrypt()
 migrate = Migrate(app, db)
+socketio = SocketIO(app)
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"  # Redirect if user is not logged in
@@ -146,9 +150,18 @@ def view_post(post_id):
     return render_template('view_post.html', post=post, comments=comments)
 
 
-@app.route("/chat")
+@app.route("/chat", methods=["GET", "POST"])
 def chat():
-    return render_template("chat.html")
+    if request.method == "POST":
+        # Nhận tin nhắn từ người dùng
+        message_content = request.form["message"]
+        new_message = Message(sender=current_user.username, content=message_content)
+        db.session.add(new_message)
+        db.session.commit()
+
+    # Lấy tất cả tin nhắn từ cơ sở dữ liệu
+    messages = Message.query.all()
+    return render_template("chat.html", messages=messages)
 
 @app.route("/articles")
 def articles():
@@ -164,6 +177,21 @@ def articles():
 def view_article(article_id):
     article = Article.query.get_or_404(article_id)
     return render_template("view_article.html", article=article)
+
+@app.route("/video")
+def video():
+    return render_template("room.html")
+
+@socketio.on("join")
+def handle_join(data):
+    room = data["room"]
+    join_room(room)
+    emit("join", data, room=room)
+
+@socketio.on("signal")
+def handle_signal(data):
+    room = data["room"]
+    emit("signal", data, room=room)
 
 @app.route("/chatbot", methods=["GET", "POST"])
 def chatbot():
