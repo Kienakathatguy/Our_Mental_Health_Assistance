@@ -4,6 +4,10 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from flask_bcrypt import Bcrypt
 from flask_login import UserMixin
+from flask_wtf import FlaskForm
+from wtforms import StringField, TextAreaField
+from wtforms.validators import DataRequired
+from flask_wtf.file import FileField, FileAllowed
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
@@ -40,6 +44,7 @@ class ForumPost(db.Model):
     id = Column(Integer, primary_key=True)
     title = Column(String(100), nullable=False)
     content = Column(Text, nullable=False)
+    image = db.Column(String(200))  # Thêm trường image
     created_at = Column(db.DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
 
@@ -47,4 +52,23 @@ class ForumPost(db.Model):
 
     def __repr__(self):
         return f"<ForumPost {self.title}>"
+
+class PostForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    content = TextAreaField('Content', validators=[DataRequired()])
+    image = FileField('Image', validators=[FileAllowed(['jpg', 'png', 'jpeg'])])
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    post_id = db.Column(db.Integer, db.ForeignKey('forum_post.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    post = relationship('ForumPost', backref='comments', lazy=True)
+    user = relationship('User', backref='comments', lazy=True)
+
+    def __repr__(self):
+        return f"<Comment {self.id}>"
+
 

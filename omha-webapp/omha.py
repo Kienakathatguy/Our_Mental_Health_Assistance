@@ -1,17 +1,29 @@
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from models import db, User, DiaryEntry, ForumPost
+from flask_migrate import Migrate
+from models import db, User, DiaryEntry, ForumPost, Comment
 from flask_bcrypt import Bcrypt
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysecretkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db.init_app(app)
 bcrypt = Bcrypt()
+migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"  # Redirect if user is not logged in
+
+UPLOAD_FOLDER = 'uploads/'  # Thư mục chứa hình ảnh
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/")
 def home():
@@ -99,14 +111,19 @@ def forum():
 @app.route('/forum/create', methods=['GET', 'POST'])
 @login_required
 def create_post():
-    if request.method == 'POST':
-        title = request.form['title']
-        content = request.form['content']
-        
-        new_post = ForumPost(title=title, content=content, user_id=current_user.id)
-        db.session.add(new_post)
+    form = PostForm()
+    if form.validate_on_submit():
+        image = form.image.data
+        if image and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        else:
+            image_path = None
+
+        post = ForumPost(title=form.title.data, content=form.content.data, image=image_path, user_id=current_user.id)
+        db.session.add(post)
         db.session.commit()
-        
         return redirect(url_for('forum'))
 
     return render_template('create_post.html')
@@ -114,7 +131,19 @@ def create_post():
 @app.route("/forum/<int:post_id>")
 def view_post(post_id):
     post = ForumPost.query.get_or_404(post_id)
-    return render_template("view_post.html", post=post)
+    comments = Comment.query.filter_by(post_id=post_id).all()
+
+    # Nếu là yêu cầu POST (thêm bình luận mới)
+    if request.method == 'POST':
+        content = request.form.get('content')
+        if content:
+            new_comment = Comment(content=content, post_id=post_id, user_id=current_user.id)
+            db.session.add(new_comment)
+            db.session.commit()
+            return redirect(url_for('view_post', post_id=post_id))  # Redirect lại để tránh lỗi double submit
+
+    # Nếu là yêu cầu GET (hiển thị bài viết và bình luận)
+    return render_template('view_post.html', post=post, comments=comments)
 
 
 @app.route("/chat")

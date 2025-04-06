@@ -6,7 +6,35 @@
         <p><strong>Posted by:</strong> {{ post.user.username }}</p>
         <p><strong>Created at:</strong> {{ post.created_at }}</p>
         <div>
+            <h4>Content:</h4>
             <p>{{ post.content }}</p>
         </div>
+
+        {% if post.image %}
+            <div>
+                <h4>Image:</h4>
+                <img src="{{ url_for('static', filename=post.image) }}" alt="Post Image" class="img-fluid">
+            </div>
+        {% endif %}
+
+        <hr>
+        <h3>Comments</h3>
+        <form method="POST">
+            <div class="form-group">
+                <label for="content">Your Comment</label>
+                <textarea class="form-control" name="content" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Post Comment</button>
+        </form>
+
+        <hr>
+        <ul class="list-group">
+            {% for comment in comments %}
+                <li class="list-group-item">
+                    <p>{{ comment.content }}</p>
+                    <p><small>Posted by {{ comment.user.username }} on {{ comment.created_at }}</small></p>
+                </li>
+            {% endfor %}
+        </ul>
     </div>
 {% endblock %}
