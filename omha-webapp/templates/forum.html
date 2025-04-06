@@ -1,15 +1,17 @@
+<!-- templates/forum.html -->
 {% extends "base.html" %}
+
 {% block content %}
-<h3>Diễn đàn cộng đồng</h3>
-<form method="post" class="mb-3">
-    <input class="form-control mb-2" name="title" placeholder="Tiêu đề" required>
-    <textarea class="form-control mb-2" name="content" placeholder="Nội dung chia sẻ" rows="3" required></textarea>
-    <button class="btn btn-primary">Đăng bài</button>
-</form>
-{% for post in posts %}
-<div class="card mb-2">
-    <div class="card-header fw-bold">{{ post.title }}</div>
-    <div class="card-body">{{ post.content }}</div>
-</div>
-{% endfor %}
+    <h2>Diễn đàn</h2>
+    <a href="{{ url_for('create_post') }}" class="btn btn-primary mb-4">Đăng bài mới</a>
+
+    <div class="list-group">
+        {% for post in posts %}
+            <a href="{{ url_for('view_post', post_id=post.id) }}" class="list-group-item list-group-item-action">
+                <h5>{{ post.title }}</h5>
+                <p>{{ post.content[:100] }}...</p>
+                <small>{{ post.created_at.strftime('%d/%m/%Y %H:%M') }} - Từ {{ post.user.username }}</small>
+            </a>
+        {% endfor %}
+    </div>
 {% endblock %}

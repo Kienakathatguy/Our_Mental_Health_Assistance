@@ -1,4 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from flask_bcrypt import Bcrypt
 from flask_login import UserMixin
@@ -35,7 +37,14 @@ class DiaryEntry(db.Model):
         return f"<DiaryEntry {self.id}>"
 
 class ForumPost(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(150), nullable=False)
-    content = db.Column(db.Text, nullable=False)
+    id = Column(Integer, primary_key=True)
+    title = Column(String(100), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(db.DateTime, default=datetime.utcnow)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+
+    user = relationship('User', backref='forum_posts', lazy=True)
+
+    def __repr__(self):
+        return f"<ForumPost {self.title}>"
 

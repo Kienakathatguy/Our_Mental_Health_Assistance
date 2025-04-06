@@ -2,11 +2,13 @@ from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from models import db, User, DiaryEntry, ForumPost
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysecretkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db.init_app(app)
+bcrypt = Bcrypt()
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"  # Redirect if user is not logged in
@@ -43,9 +45,9 @@ def login():
         password = request.form["password"]
         # Kiểm tra xem người dùng có tồn tại không
         user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
+        if user and bcrypt.check_password_hash(user.password_hash, password):
             login_user(user)
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('home'))
         else:
             # Nếu tài khoản không tồn tại hoặc mật khẩu sai, hiển thị lỗi
             flash('Tài khoản hoặc mật khẩu không đúng!', 'danger')
@@ -89,17 +91,31 @@ def delete_diary(id):
     return redirect("/diary")
 
 
-@app.route("/forum", methods=["GET", "POST"])
+@app.route('/forum')
 def forum():
-    if request.method == "POST":
-        title = request.form["title"]
-        content = request.form["content"]
-        post = ForumPost(title=title, content=content)
-        db.session.add(post)
+    posts = ForumPost.query.order_by(ForumPost.created_at.desc()).all()
+    return render_template('forum.html', posts=posts)
+
+@app.route('/forum/create', methods=['GET', 'POST'])
+@login_required
+def create_post():
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+        
+        new_post = ForumPost(title=title, content=content, user_id=current_user.id)
+        db.session.add(new_post)
         db.session.commit()
-        return redirect("/forum")
-    posts = ForumPost.query.order_by(ForumPost.id.desc()).all()
-    return render_template("forum.html", posts=posts)
+        
+        return redirect(url_for('forum'))
+
+    return render_template('create_post.html')
+
+@app.route("/forum/<int:post_id>")
+def view_post(post_id):
+    post = ForumPost.query.get_or_404(post_id)
+    return render_template("view_post.html", post=post)
+
 
 @app.route("/chat")
 def chat():
