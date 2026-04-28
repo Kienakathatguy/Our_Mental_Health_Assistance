@@ -87,3 +87,19 @@ class Video(db.Model):
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 
+class ChatMessage(db.Model):
+    """Stores one turn of a chatbot conversation for a user.
+
+    role is either 'user' or 'assistant', mirroring the HF /v1/chat/completions
+    message format so the full history can be forwarded directly to the API.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    role = db.Column(db.String(10), nullable=False)   # 'user' | 'assistant'
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    author = db.relationship('User', backref='chat_messages', lazy=True)
+
+    def __repr__(self):
+        return f"<ChatMessage {self.role} user={self.user_id}>"

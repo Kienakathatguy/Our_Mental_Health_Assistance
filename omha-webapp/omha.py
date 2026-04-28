@@ -1,18 +1,19 @@
 import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
-from models import db, User, DiaryEntry, ForumPost, Comment, Article, Video
+from models import db, User, DiaryEntry, ForumPost, Comment, Article, Video, ChatMessage
 from flask_bcrypt import Bcrypt
 import os
+import requests
 from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO, emit, join_room
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'mysecretkey'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-me-before-production')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db.init_app(app)
 bcrypt = Bcrypt()
@@ -91,8 +92,12 @@ def diary():
     return render_template("diary.html", entries=entries)
 
 @app.route("/diary/edit/<int:id>", methods=["GET", "POST"])
+@login_required
 def edit_diary(id):
     entry = DiaryEntry.query.get_or_404(id)
+    if entry.user_id != current_user.id:
+        flash("You are not authorised to edit this entry.", "danger")
+        return redirect("/diary")
     if request.method == "POST":
         entry.content = request.form["entry"]
         entry.emotion = request.form.get("emotion", entry.emotion)
@@ -101,8 +106,12 @@ def edit_diary(id):
     return render_template("edit_diary.html", entry=entry)
 
 @app.route("/diary/delete/<int:id>")
+@login_required
 def delete_diary(id):
     entry = DiaryEntry.query.get_or_404(id)
+    if entry.user_id != current_user.id:
+        flash("You are not authorised to delete this entry.", "danger")
+        return redirect("/diary")
     db.session.delete(entry)
     db.session.commit()
     return redirect("/diary")
@@ -133,21 +142,22 @@ def create_post():
 
     return render_template('create_post.html')
 
-@app.route("/forum/<int:post_id>")
+@app.route("/forum/<int:post_id>", methods=["GET", "POST"])
 def view_post(post_id):
     post = ForumPost.query.get_or_404(post_id)
     comments = Comment.query.filter_by(post_id=post_id).all()
 
-    # Nếu là yêu cầu POST (thêm bình luận mới)
     if request.method == 'POST':
+        if not current_user.is_authenticated:
+            flash("You must be logged in to comment.", "danger")
+            return redirect(url_for('login'))
         content = request.form.get('content')
         if content:
             new_comment = Comment(content=content, post_id=post_id, user_id=current_user.id)
             db.session.add(new_comment)
             db.session.commit()
-            return redirect(url_for('view_post', post_id=post_id))  # Redirect lại để tránh lỗi double submit
+        return redirect(url_for('view_post', post_id=post_id))
 
-    # Nếu là yêu cầu GET (hiển thị bài viết và bình luận)
     return render_template('view_post.html', post=post, comments=comments)
 
 @app.route("/articles")
@@ -180,18 +190,114 @@ def handle_signal(data):
     room = data["room"]
     emit("signal", data, room=room)
 
-@app.route("/chatbot", methods=["GET", "POST"])
+# ---------------------------------------------------------------------------
+# Chatbot — Hugging Face Inference API, multi-turn conversation
+# ---------------------------------------------------------------------------
+HF_API_TOKEN = os.environ.get("HF_API_TOKEN", "")
+HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
+HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}/v1/chat/completions"
+
+SYSTEM_PROMPT = (
+    "You are a warm, empathetic mental-health support companion. "
+    "Your role is to listen carefully, validate the user's feelings, and offer "
+    "gentle, evidence-based coping suggestions when appropriate. "
+    "Always respond in the same language the user writes in. "
+    "Never diagnose, never prescribe. If the user expresses thoughts of self-harm "
+    "or suicide, encourage them to contact a professional or crisis line immediately."
+)
+
+MAX_HISTORY_TURNS = 10  # keep last 10 pairs (20 messages) to stay within context limits
+
+
+def _call_hf_api(messages: list) -> str:
+    """Send a messages list to the HF chat-completions endpoint and return the reply text."""
+    if not HF_API_TOKEN:
+        return (
+            "⚠️ Chatbot chưa được cấu hình. "
+            "Vui lòng đặt biến môi trường HF_API_TOKEN."
+        )
+    headers = {
+        "Authorization": f"Bearer {HF_API_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": HF_MODEL,
+        "messages": messages,
+        "max_tokens": 512,
+        "temperature": 0.7,
+    }
+    try:
+        resp = requests.post(HF_API_URL, headers=headers, json=payload, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["choices"][0]["message"]["content"].strip()
+    except requests.exceptions.Timeout:
+        return "⏳ Chatbot đang bận, vui lòng thử lại sau."
+    except requests.exceptions.RequestException as exc:
+        return f"❌ Lỗi kết nối tới AI: {exc}"
+    except (KeyError, IndexError):
+        return "❌ Phản hồi không hợp lệ từ AI."
+
+
+@app.route("/chatbot", methods=["GET"])
+@login_required
 def chatbot():
-    reply = ""
-    if request.method == "POST":
-        msg = request.form["message"]
-        if "buồn" in msg:
-            reply = "Mình ở đây, bạn không cô đơn đâu 🌱"
-        elif "vui" in msg:
-            reply = "Thật tuyệt! Hãy chia sẻ niềm vui của bạn nhé!"
-        else:
-            reply = "Cảm ơn bạn đã chia sẻ. Bạn muốn nói thêm điều gì không?"
-    return render_template("chatbot.html", reply=reply)
+    history = (
+        ChatMessage.query
+        .filter_by(user_id=current_user.id)
+        .order_by(ChatMessage.created_at.asc())
+        .all()
+    )
+    return render_template("chatbot.html", history=history)
+
+
+@app.route("/chatbot/send", methods=["POST"])
+@login_required
+def chatbot_send():
+    user_text = request.form.get("message", "").strip()
+    if not user_text:
+        return redirect(url_for("chatbot"))
+
+    # Persist the user's message
+    user_msg = ChatMessage(user_id=current_user.id, role="user", content=user_text)
+    db.session.add(user_msg)
+    db.session.flush()  # get created_at assigned before we build history
+
+    # Build messages list: system prompt + last N turns + new user message
+    past = (
+        ChatMessage.query
+        .filter_by(user_id=current_user.id)
+        .order_by(ChatMessage.created_at.desc())
+        .limit(MAX_HISTORY_TURNS * 2)
+        .all()
+    )
+    past.reverse()
+
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for m in past:
+        messages.append({"role": m.role, "content": m.content})
+
+    # Call Hugging Face
+    reply_text = _call_hf_api(messages)
+
+    # Persist assistant reply
+    assistant_msg = ChatMessage(
+        user_id=current_user.id, role="assistant", content=reply_text
+    )
+    db.session.add(assistant_msg)
+    db.session.commit()
+
+    return redirect(url_for("chatbot"))
+
+
+@app.route("/chatbot/clear", methods=["POST"])
+@login_required
+def chatbot_clear():
+    """Delete all chat history for the current user."""
+    ChatMessage.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    flash("Lịch sử trò chuyện đã được xóa.", "info")
+    return redirect(url_for("chatbot"))
 
 if __name__ == "__main__":
     with app.app_context():
