@@ -20,7 +20,7 @@
                 <div class="chat-message {% if msg.role == 'user' %}user-message{% else %}bot-message{% endif %}" style="--msg-index:{{ loop.index0 }}">
                     <div class="message-meta">
                         <span class="badge {% if msg.role == 'user' %}bg-primary{% else %}bg-secondary{% endif %}">{% if msg.role == 'user' %}Bạn{% else %}Bot{% endif %}</span>
-                        <span class="message-time">{{ msg.created_at.strftime('%d/%m %H:%M') }}</span>
+                        <span class="message-time" data-ts="{{ (msg.created_at.timestamp() * 1000)|int }}">{{ msg.created_at.strftime('%d/%m %H:%M') }}</span>
                     </div>
                     <div class="bubble">{{ msg.content | trim }}</div>
                     <div class="message-status">
@@ -96,12 +96,51 @@
                     });
                 };
 
+                const escapeHtml = (text) => {
+                    return text
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                };
+
+                const formatChatText = (text) => {
+                    let safe = escapeHtml(text);
+                    safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                    safe = safe.replace(/__(.+?)__/g, '<strong>$1</strong>');
+                    safe = safe.replace(/\*(.+?)\*/g, '<em>$1</em>');
+                    safe = safe.replace(/_(.+?)_/g, '<em>$1</em>');
+                    safe = safe.replace(/`([^`]+)`/g, '<code>$1</code>');
+                    safe = safe.replace(/\n/g, '<br>');
+                    return safe;
+                };
+
+                const updateMessageTimestamps = () => {
+                    document.querySelectorAll('.message-time[data-ts]').forEach(el => {
+                        const ts = Number(el.dataset.ts);
+                        if (!Number.isFinite(ts) || ts <= 0) return;
+                        const date = new Date(ts);
+                        const hours = date.getHours().toString().padStart(2, '0');
+                        const minutes = date.getMinutes().toString().padStart(2, '0');
+                        el.textContent = `${hours}:${minutes}`;
+                    });
+                };
+
+                const renderChatText = () => {
+                    document.querySelectorAll('.bubble').forEach(bubble => {
+                        bubble.innerHTML = formatChatText(bubble.textContent);
+                    });
+                };
+
                 if (chatBox) {
                     chatBox.scrollBehavior = 'smooth';
                     scrollToBottom();
                 }
 
                 updateDayLabels();
+                updateMessageTimestamps();
+                renderChatText();
 
                 if (input) {
                     adjustTextarea();
