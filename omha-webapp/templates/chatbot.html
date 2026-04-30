@@ -2,14 +2,22 @@
 {% block content %}
 
 <div class="container mt-5">
-    <div class="card shadow-sm p-4">
+    <div class="card shadow-sm p-4 chat-panel">
 
         <h3 class="text-primary mb-3">🤖 Chatbot hỗ trợ tâm lý</h3>
 
         <!-- CHAT BOX -->
         <div id="chat-box" class="chat-window mb-3">
+            {% set prev_date = None %}
             {% for msg in messages %}
-                <div class="chat-message {% if msg.role == 'user' %}user-message{% else %}bot-message{% endif %}">
+                {% set msg_date = msg.created_at.date() %}
+                {% if loop.first or msg_date != prev_date %}
+                    <div class="day-divider" data-date="{{ msg.created_at.strftime('%Y-%m-%d') }}">
+                        <span>{{ msg.created_at.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                    {% set prev_date = msg_date %}
+                {% endif %}
+                <div class="chat-message {% if msg.role == 'user' %}user-message{% else %}bot-message{% endif %}" style="--msg-index:{{ loop.index0 }}">
                     <div class="message-meta">
                         <span class="badge {% if msg.role == 'user' %}bg-primary{% else %}bg-secondary{% endif %}">{% if msg.role == 'user' %}Bạn{% else %}Bot{% endif %}</span>
                         <span class="message-time">{{ msg.created_at.strftime('%d/%m %H:%M') }}</span>
@@ -67,6 +75,33 @@
                     chatBox.scrollBehavior = 'smooth';
                     scrollToBottom();
                 }
+
+                const updateDayLabels = () => {
+                    const today = new Date();
+                    const yesterday = new Date(today);
+                    yesterday.setDate(today.getDate() - 1);
+
+                    document.querySelectorAll('.day-divider').forEach(div => {
+                        const dateString = div.dataset.date;
+                        const date = new Date(dateString + 'T00:00:00');
+                        if (isNaN(date)) {
+                            return;
+                        }
+
+                        if (date.toDateString() === today.toDateString()) {
+                            div.querySelector('span').textContent = 'Hôm nay';
+                        } else if (date.toDateString() === yesterday.toDateString()) {
+                            div.querySelector('span').textContent = 'Hôm qua';
+                        }
+                    });
+                };
+
+                if (chatBox) {
+                    chatBox.scrollBehavior = 'smooth';
+                    scrollToBottom();
+                }
+
+                updateDayLabels();
 
                 if (input) {
                     adjustTextarea();
