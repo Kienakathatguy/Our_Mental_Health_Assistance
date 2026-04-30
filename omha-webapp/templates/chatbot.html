@@ -1,22 +1,49 @@
 {% extends "base.html" %}
 {% block content %}
+
 <div class="container mt-5">
-    <div class="card shadow-sm p-4 bg-white rounded">
-        <h2 class="text-primary mb-4">🤖 Chatbot hỗ trợ tâm lý</h2>
-        
-        {% if reply %}
-            <div class="alert alert-info">
-                <strong>Chatbot:</strong> {{ reply }}
+    <div class="card shadow-sm p-4">
+
+        <h3 class="text-primary mb-3">🤖 Chatbot hỗ trợ tâm lý</h3>
+
+        <!-- CHAT BOX -->
+        <div id="chat-box" style="height:350px; overflow-y:auto;" class="mb-3 border p-3 rounded">
+
+            {% for msg in messages %}
+                {% if msg.role == "user" %}
+                    <div class="text-end mb-2">
+                        <span class="badge bg-primary">Bạn</span><br>
+                        <span class="d-inline-block bg-primary text-white p-2 rounded">
+                            {{ msg.content }}
+                        </span>
+                    </div>
+                {% else %}
+                    <div class="text-start mb-2">
+                        <span class="badge bg-secondary">Bot</span><br>
+                        <span class="d-inline-block bg-light p-2 rounded">
+                            {{ msg.content }}
+                        </span>
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+        </div>
+
+        <!-- INPUT -->
+        <form method="POST" action="{{ url_for('chatbot_send') }}">
+            <div class="input-group">
+                <input type="text" name="message" class="form-control"
+                       placeholder="Bạn đang cảm thấy thế nào..." required>
+                <button class="btn btn-primary">Gửi</button>
             </div>
-        {% endif %}
-        
-        <form method="POST">
-            <div class="form-group mb-3">
-                <label for="message">Bạn muốn tâm sự điều gì? 💬</label>
-                <textarea class="form-control" name="message" rows="4" placeholder="Mình đang cảm thấy..."></textarea>
-            </div>
-            <button class="btn btn-primary">Gửi 💌</button>
         </form>
+
+        <!-- CLEAR BUTTON -->
+        <form method="POST" action="{{ url_for('chatbot_clear') }}" class="mt-2">
+            <button class="btn btn-outline-danger btn-sm">🗑️ Xoá lịch sử</button>
+        </form>
+
     </div>
 </div>
+
 {% endblock %}

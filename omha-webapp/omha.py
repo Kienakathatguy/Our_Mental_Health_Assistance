@@ -1,27 +1,31 @@
 import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
-from models import db, User, DiaryEntry, ForumPost, Comment, Article, Video, ChatMessage
 from flask_bcrypt import Bcrypt
-import os
-import requests
-from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO, emit, join_room
+from dotenv import load_dotenv
+
+import os
+
+from models import db, User, DiaryEntry, ForumPost, Comment, Article, Video, ChatMessage
+from services.chatbot_service import call_chatbot_api
+
+load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-me-before-production')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+
 db.init_app(app)
-bcrypt = Bcrypt()
+bcrypt = Bcrypt(app)
 migrate = Migrate(app, db)
 socketio = SocketIO(app)
 
 login_manager = LoginManager(app)
-login_manager.login_view = "login"  # Redirect if user is not logged in
+login_manager.login_view = "login"
 
 UPLOAD_FOLDER = 'uploads/'  # Thư mục chứa hình ảnh
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -190,101 +194,62 @@ def handle_signal(data):
     room = data["room"]
     emit("signal", data, room=room)
 
-# ---------------------------------------------------------------------------
-# Chatbot — Hugging Face Inference API, multi-turn conversation
-# ---------------------------------------------------------------------------
-HF_API_TOKEN = os.environ.get("HF_API_TOKEN", "")
-HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
-HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}/v1/chat/completions"
+MAX_HISTORY = 10
 
-SYSTEM_PROMPT = (
-    "You are a warm, empathetic mental-health support companion. "
-    "Your role is to listen carefully, validate the user's feelings, and offer "
-    "gentle, evidence-based coping suggestions when appropriate. "
-    "Always respond in the same language the user writes in. "
-    "Never diagnose, never prescribe. If the user expresses thoughts of self-harm "
-    "or suicide, encourage them to contact a professional or crisis line immediately."
-)
-
-MAX_HISTORY_TURNS = 10  # keep last 10 pairs (20 messages) to stay within context limits
-
-
-def _call_hf_api(messages: list) -> str:
-    """Send a messages list to the HF chat-completions endpoint and return the reply text."""
-    if not HF_API_TOKEN:
-        return (
-            "⚠️ Chatbot chưa được cấu hình. "
-            "Vui lòng đặt biến môi trường HF_API_TOKEN."
-        )
-    headers = {
-        "Authorization": f"Bearer {HF_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": HF_MODEL,
-        "messages": messages,
-        "max_tokens": 512,
-        "temperature": 0.7,
-    }
-    try:
-        resp = requests.post(HF_API_URL, headers=headers, json=payload, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        return data["choices"][0]["message"]["content"].strip()
-    except requests.exceptions.Timeout:
-        return "⏳ Chatbot đang bận, vui lòng thử lại sau."
-    except requests.exceptions.RequestException as exc:
-        return f"❌ Lỗi kết nối tới AI: {exc}"
-    except (KeyError, IndexError):
-        return "❌ Phản hồi không hợp lệ từ AI."
-
-
-@app.route("/chatbot", methods=["GET"])
+@app.route("/chatbot")
 @login_required
 def chatbot():
-    history = (
+    messages = (
         ChatMessage.query
         .filter_by(user_id=current_user.id)
         .order_by(ChatMessage.created_at.asc())
         .all()
     )
-    return render_template("chatbot.html", history=history)
+    return render_template("chatbot.html", messages=messages)
 
 
 @app.route("/chatbot/send", methods=["POST"])
 @login_required
 def chatbot_send():
     user_text = request.form.get("message", "").strip()
+
     if not user_text:
         return redirect(url_for("chatbot"))
 
-    # Persist the user's message
-    user_msg = ChatMessage(user_id=current_user.id, role="user", content=user_text)
+    # Save user message
+    user_msg = ChatMessage(
+        user_id=current_user.id,
+        role="user",
+        content=user_text
+    )
     db.session.add(user_msg)
-    db.session.flush()  # get created_at assigned before we build history
+    db.session.flush()
 
-    # Build messages list: system prompt + last N turns + new user message
-    past = (
+    # Get recent history
+    past_messages = (
         ChatMessage.query
         .filter_by(user_id=current_user.id)
         .order_by(ChatMessage.created_at.desc())
-        .limit(MAX_HISTORY_TURNS * 2)
+        .limit(MAX_HISTORY * 2)
         .all()
     )
-    past.reverse()
+    past_messages.reverse()
 
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    for m in past:
-        messages.append({"role": m.role, "content": m.content})
+    messages = [
+        {"role": m.role, "content": m.content}
+        for m in past_messages
+    ]
 
-    # Call Hugging Face
-    reply_text = _call_hf_api(messages)
+    # 🔥 CALL GEMINI HERE
+    reply_text = call_chatbot_api(messages)
 
-    # Persist assistant reply
-    assistant_msg = ChatMessage(
-        user_id=current_user.id, role="assistant", content=reply_text
+    # Save bot reply
+    bot_msg = ChatMessage(
+        user_id=current_user.id,
+        role="assistant",
+        content=reply_text
     )
-    db.session.add(assistant_msg)
+    db.session.add(bot_msg)
     db.session.commit()
 
     return redirect(url_for("chatbot"))
@@ -293,10 +258,9 @@ def chatbot_send():
 @app.route("/chatbot/clear", methods=["POST"])
 @login_required
 def chatbot_clear():
-    """Delete all chat history for the current user."""
     ChatMessage.query.filter_by(user_id=current_user.id).delete()
     db.session.commit()
-    flash("Lịch sử trò chuyện đã được xóa.", "info")
+    flash("Đã xoá lịch sử chat.", "info")
     return redirect(url_for("chatbot"))
 
 if __name__ == "__main__":
