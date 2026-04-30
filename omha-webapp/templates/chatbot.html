@@ -7,36 +7,63 @@
         <h3 class="text-primary mb-3">🤖 Chatbot hỗ trợ tâm lý</h3>
 
         <!-- CHAT BOX -->
-        <div id="chat-box" style="height:350px; overflow-y:auto;" class="mb-3 border p-3 rounded">
-
+        <div id="chat-box" class="chat-window mb-3">
             {% for msg in messages %}
-                {% if msg.role == "user" %}
-                    <div class="text-end mb-2">
-                        <span class="badge bg-primary">Bạn</span><br>
-                        <span class="d-inline-block bg-primary text-white p-2 rounded">
-                            {{ msg.content }}
-                        </span>
+                <div class="chat-message {% if msg.role == 'user' %}user-message{% else %}bot-message{% endif %}">
+                    <span class="badge {% if msg.role == 'user' %}bg-primary{% else %}bg-secondary{% endif %}">{% if msg.role == 'user' %}Bạn{% else %}Bot{% endif %}</span>
+                    <div class="bubble">
+                        {{ msg.content }}
                     </div>
-                {% else %}
-                    <div class="text-start mb-2">
-                        <span class="badge bg-secondary">Bot</span><br>
-                        <span class="d-inline-block bg-light p-2 rounded">
-                            {{ msg.content }}
-                        </span>
-                    </div>
-                {% endif %}
+                </div>
             {% endfor %}
-
         </div>
 
         <!-- INPUT -->
-        <form method="POST" action="{{ url_for('chatbot_send') }}">
+        <form id="chat-form" method="POST" action="{{ url_for('chatbot_send') }}">
             <div class="input-group">
-                <input type="text" name="message" class="form-control"
-                       placeholder="Bạn đang cảm thấy thế nào..." required>
-                <button class="btn btn-primary">Gửi</button>
+                <input id="message-input" type="text" name="message" class="form-control"
+                       placeholder="Bạn đang cảm thấy thế nào..." required autocomplete="off">
+                <button id="send-button" type="submit" class="btn btn-primary">Gửi</button>
             </div>
         </form>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const chatBox = document.getElementById('chat-box');
+                if (chatBox) {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+
+                const form = document.getElementById('chat-form');
+                const input = document.getElementById('message-input');
+                const sendButton = document.getElementById('send-button');
+
+                if (form && input && sendButton) {
+                    form.addEventListener('submit', function (event) {
+                        if (!input.value.trim()) {
+                            return;
+                        }
+
+                        event.preventDefault();
+                        sendButton.disabled = true;
+                        input.disabled = true;
+
+                        const loadingItem = document.createElement('div');
+                        loadingItem.className = 'chat-message bot-message loading';
+                        loadingItem.innerHTML = '<span class="badge bg-secondary">Bot</span>' +
+                            '<div class="bubble bubble-loading">' +
+                            '<span class="dot"></span><span class="dot"></span><span class="dot"></span>' +
+                            '</div>';
+                        chatBox.appendChild(loadingItem);
+                        chatBox.scrollTop = chatBox.scrollHeight;
+
+                        window.requestAnimationFrame(() => {
+                            setTimeout(() => form.submit(), 50);
+                        });
+                    });
+                }
+            });
+        </script>
 
         <!-- CLEAR BUTTON -->
         <form method="POST" action="{{ url_for('chatbot_clear') }}" class="mt-2">
