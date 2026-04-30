@@ -10,19 +10,32 @@
         <div id="chat-box" class="chat-window mb-3">
             {% for msg in messages %}
                 <div class="chat-message {% if msg.role == 'user' %}user-message{% else %}bot-message{% endif %}">
-                    <span class="badge {% if msg.role == 'user' %}bg-primary{% else %}bg-secondary{% endif %}">{% if msg.role == 'user' %}Bạn{% else %}Bot{% endif %}</span>
+                    <div class="message-meta">
+                        <span class="badge {% if msg.role == 'user' %}bg-primary{% else %}bg-secondary{% endif %}">{% if msg.role == 'user' %}Bạn{% else %}Bot{% endif %}</span>
+                        <span class="message-time">{{ msg.created_at.strftime('%d/%m %H:%M') }}</span>
+                    </div>
                     <div class="bubble">
                         {{ msg.content }}
+                    </div>
+                    <div class="message-status">
+                        {% if msg.role == 'user' %}Đã gửi{% else %}Đã trả lời{% endif %}
                     </div>
                 </div>
             {% endfor %}
         </div>
 
+        <div id="typing-indicator" class="typing-indicator d-none">
+            <span class="indicator-dot"></span>
+            <span class="indicator-dot"></span>
+            <span class="indicator-dot"></span>
+            <span class="typing-text">Bot đang suy nghĩ...</span>
+        </div>
+
         <!-- INPUT -->
         <form id="chat-form" method="POST" action="{{ url_for('chatbot_send') }}">
             <div class="input-group">
-                <input id="message-input" type="text" name="message" class="form-control"
-                       placeholder="Bạn đang cảm thấy thế nào..." required autocomplete="off">
+                <textarea id="message-input" name="message" class="form-control" rows="1"
+                          placeholder="Bạn đang cảm thấy thế nào..." required autocomplete="off" style="resize: none;"></textarea>
                 <button id="send-button" type="submit" class="btn btn-primary">Gửi</button>
             </div>
         </form>
@@ -30,13 +43,31 @@
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const chatBox = document.getElementById('chat-box');
-                if (chatBox) {
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                }
-
                 const form = document.getElementById('chat-form');
                 const input = document.getElementById('message-input');
                 const sendButton = document.getElementById('send-button');
+                const typingIndicator = document.getElementById('typing-indicator');
+
+                const scrollToBottom = () => {
+                    if (chatBox) {
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
+                };
+
+                const adjustTextarea = () => {
+                    input.style.height = 'auto';
+                    input.style.height = Math.min(input.scrollHeight, 180) + 'px';
+                };
+
+                if (chatBox) {
+                    chatBox.scrollBehavior = 'smooth';
+                    scrollToBottom();
+                }
+
+                if (input) {
+                    adjustTextarea();
+                    input.addEventListener('input', adjustTextarea);
+                }
 
                 if (form && input && sendButton) {
                     form.addEventListener('submit', function (event) {
@@ -46,16 +77,22 @@
 
                         event.preventDefault();
                         sendButton.disabled = true;
-                        input.disabled = true;
+                        input.readOnly = true;
+                        input.classList.add('disabled-input');
+
+                        if (typingIndicator) {
+                            typingIndicator.classList.remove('d-none');
+                        }
 
                         const loadingItem = document.createElement('div');
                         loadingItem.className = 'chat-message bot-message loading';
                         loadingItem.innerHTML = '<span class="badge bg-secondary">Bot</span>' +
                             '<div class="bubble bubble-loading">' +
                             '<span class="dot"></span><span class="dot"></span><span class="dot"></span>' +
-                            '</div>';
+                            '</div>' +
+                            '<div class="message-status">Đang gửi...</div>';
                         chatBox.appendChild(loadingItem);
-                        chatBox.scrollTop = chatBox.scrollHeight;
+                        scrollToBottom();
 
                         window.requestAnimationFrame(() => {
                             setTimeout(() => form.submit(), 50);
