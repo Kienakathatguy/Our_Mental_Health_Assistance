@@ -76,6 +76,18 @@ footer {
     margin-left: 0.4rem;
 }
 
+.quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.quick-action {
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.85rem;
+}
+
 .typing-indicator {
     display: flex;
     align-items: center;
@@ -114,16 +126,17 @@ footer {
 }
 
 .bubble {
-    display: inline-block;
+    display: block;
+    width: auto;
     max-width: 72%;
     min-width: 120px;
-    width: fit-content;
     padding: 12px 16px;
     border-radius: 22px;
     line-height: 1.55;
     box-shadow: 0 8px 18px rgba(36, 57, 88, 0.08);
     word-wrap: break-word;
     white-space: pre-wrap;
+    text-align: left;
 }
 
 .user-message .bubble {
@@ -133,10 +146,42 @@ footer {
 }
 
 .bot-message .bubble {
+    position: relative;
     background: #ffffff;
     color: #202639;
     border: 1px solid #e8eef7;
     border-bottom-left-radius: 6px;
+}
+
+.bot-message .bubble::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    bottom: 12px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #ffffff;
+}
+
+.user-message .bubble {
+    position: relative;
+    background: linear-gradient(135deg, #3366ff, #1f8bfd);
+    color: #ffffff;
+    border-bottom-right-radius: 6px;
+}
+
+.user-message .bubble::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    bottom: 12px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 8px solid #1f8bfd;
 }
 
 .bubble-loading {
