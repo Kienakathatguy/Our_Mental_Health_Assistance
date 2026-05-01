@@ -12,30 +12,12 @@
       padding-right: 1rem;
     }
 
-    .btn-outline-primary {
-      background-color: #007bff; /* Nền màu xanh sáng */
-      color: white;
-      border: 1px solid #007bff;
-    }
-
-    .btn-outline-primary:hover {
-      background-color: #0056b3; /* Màu xanh đậm khi hover */
-      border-color: #0056b3;
-    }
-
-    .btn-outline-secondary {
-      background-color: #6c757d; /* Nền màu xám */
-      color: white;
-      border: 1px solid #6c757d;
-    }
-
-    .btn-outline-secondary:hover {
-      background-color: #5a6268; /* Màu xám đậm khi hover */
-      border-color: #5a6268;
-    }
-
     .navbar-nav .btn {
       margin-left: 10px; /* Khoảng cách giữa các nút */
+    }
+
+    .theme-toggle-btn {
+      min-width: 48px;
     }
   </style>
 </head>
@@ -56,7 +38,8 @@
           <li class="nav-item"><a class="nav-link" href="/chatbot">Chatbot</a></li>
         </ul>
 
-        <div class="d-flex ms-auto">
+        <div class="d-flex ms-auto align-items-center">
+          <button id="theme-toggle" type="button" class="btn btn-outline-primary btn-sm me-2 theme-toggle-btn" aria-label="Bật/tắt chế độ tối">🌙</button>
           {% if current_user.is_authenticated %}
             <span class="navbar-text text-white me-2">Chào, {{ current_user.username }}!</span>
             <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Đăng xuất</a>
@@ -76,6 +59,34 @@
   <footer class="bg-light text-center py-3">
     <p class="mb-0">© 2025 OMHA. Đồng hành cùng sức khỏe tâm lý của bạn.</p>
   </footer>
+
+  <script>
+    (function () {
+      const themeToggle = document.getElementById('theme-toggle');
+      const storageKey = 'omhaTheme';
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const savedTheme = localStorage.getItem(storageKey);
+      const currentTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+
+      function applyTheme(theme) {
+        document.body.classList.toggle('dark-theme', theme === 'dark');
+        if (themeToggle) {
+          themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+          themeToggle.title = theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
+        }
+      }
+
+      applyTheme(currentTheme);
+
+      if (themeToggle) {
+        themeToggle.addEventListener('click', function () {
+          const nextTheme = document.body.classList.contains('dark-theme') ? 'light' : 'dark';
+          localStorage.setItem(storageKey, nextTheme);
+          applyTheme(nextTheme);
+        });
+      }
+    })();
+  </script>
 </body>
 
 </html>
