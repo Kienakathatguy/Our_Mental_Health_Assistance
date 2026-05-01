@@ -37,4 +37,27 @@
     </div>
 {% endfor %}
 
+<script>
+    // Show skeleton loader on page load, then hide when content is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        const entries = document.querySelectorAll('.card');
+        
+        // If no entries, show a helpful message
+        if (entries.length === 1) { // Only form card exists
+            const container = document.querySelector('h4.mb-3');
+            if (container && container.nextElementSibling === null) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'alert alert-info';
+                emptyMsg.innerHTML = '<p>Chưa có ghi chép nào. Hãy bắt đầu bằng cách tạo ghi chép đầu tiên của bạn!</p>';
+                container.parentElement.appendChild(emptyMsg);
+            }
+        }
+        
+        // Hide skeleton loader if it's showing
+        if (window.skeletonLoader) {
+            window.skeletonLoader.hide();
+        }
+    });
+</script>
+
 {% endblock %}

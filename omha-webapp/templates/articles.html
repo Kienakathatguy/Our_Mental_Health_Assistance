@@ -25,4 +25,27 @@
     {% endfor %}
 </div>
 
+<script>
+    // Show skeleton loader on page load, then hide when content is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        const articles = document.querySelectorAll('.card');
+        
+        // If no articles, show a helpful message
+        if (articles.length === 0) {
+            const container = document.querySelector('.row');
+            if (container) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'alert alert-info';
+                emptyMsg.innerHTML = '<p>Chưa có bài viết nào. Vui lòng quay lại sau!</p>';
+                container.parentElement.appendChild(emptyMsg);
+            }
+        }
+        
+        // Hide skeleton loader if it's showing
+        if (window.skeletonLoader) {
+            window.skeletonLoader.hide();
+        }
+    });
+</script>
+
 {% endblock %}

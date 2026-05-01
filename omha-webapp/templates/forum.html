@@ -14,4 +14,27 @@
             </a>
         {% endfor %}
     </div>
+
+    <script>
+        // Show skeleton loader on page load, then hide when content is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const posts = document.querySelectorAll('.list-group-item');
+            
+            // If no posts, show a helpful message
+            if (posts.length === 0) {
+                const container = document.querySelector('.list-group');
+                if (container) {
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'alert alert-info';
+                    emptyMsg.innerHTML = '<p>Chưa có bài viết nào. Hãy <a href="/create_post">đăng bài mới</a> để bắt đầu!</p>';
+                    container.parentElement.appendChild(emptyMsg);
+                }
+            }
+            
+            // Hide skeleton loader if it's showing
+            if (window.skeletonLoader) {
+                window.skeletonLoader.hide();
+            }
+        });
+    </script>
 {% endblock %}
