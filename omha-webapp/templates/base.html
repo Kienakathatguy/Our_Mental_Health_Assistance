@@ -39,6 +39,11 @@
         </ul>
 
         <div class="d-flex ms-auto align-items-center">
+          <div class="btn-group btn-group-sm me-2 accessibility-controls" role="group" aria-label="Chuyển đổi kích thước và độ tương phản">
+            <button id="decrease-text" type="button" class="btn btn-outline-primary" aria-label="Giảm kích thước chữ">A–</button>
+            <button id="increase-text" type="button" class="btn btn-outline-primary" aria-label="Tăng kích thước chữ">A+</button>
+            <button id="contrast-toggle" type="button" class="btn btn-outline-primary" aria-pressed="false" aria-label="Chuyển đổi độ tương phản">⚡</button>
+          </div>
           <button id="theme-toggle" type="button" class="btn btn-outline-primary btn-sm me-2 theme-toggle-btn" aria-label="Bật/tắt chế độ tối">🌙</button>
           {% if current_user.is_authenticated %}
             <span class="navbar-text text-white me-2">Chào, {{ current_user.username }}!</span>
@@ -63,10 +68,21 @@
   <script>
     (function () {
       const themeToggle = document.getElementById('theme-toggle');
-      const storageKey = 'omhaTheme';
+      const increaseText = document.getElementById('increase-text');
+      const decreaseText = document.getElementById('decrease-text');
+      const contrastToggle = document.getElementById('contrast-toggle');
+      const storageKey = 'omhaAccessibility';
       const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const savedTheme = localStorage.getItem(storageKey);
-      const currentTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+      const savedPrefs = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      const prefs = {
+        theme: savedPrefs.theme || (prefersDark ? 'dark' : 'light'),
+        textSize: savedPrefs.textSize || 'normal',
+        highContrast: savedPrefs.highContrast || false,
+      };
+
+      function savePrefs() {
+        localStorage.setItem(storageKey, JSON.stringify(prefs));
+      }
 
       function applyTheme(theme) {
         document.body.classList.toggle('dark-theme', theme === 'dark');
@@ -76,15 +92,70 @@
         }
       }
 
-      applyTheme(currentTheme);
+      function applyTextSize(size) {
+        document.body.classList.toggle('large-text', size === 'large');
+        document.body.classList.toggle('xlarge-text', size === 'xlarge');
+        if (decreaseText) {
+          decreaseText.disabled = size === 'normal';
+        }
+        if (increaseText) {
+          increaseText.disabled = size === 'xlarge';
+        }
+      }
+
+      function applyContrast(enabled) {
+        document.body.classList.toggle('high-contrast', enabled);
+        if (contrastToggle) {
+          contrastToggle.textContent = enabled ? '♿' : '⚡';
+          contrastToggle.setAttribute('aria-pressed', enabled.toString());
+          contrastToggle.title = enabled ? 'Chuyển sang độ tương phản chuẩn' : 'Bật độ tương phản cao';
+        }
+      }
+
+      function updateControls() {
+        applyTheme(prefs.theme);
+        applyTextSize(prefs.textSize);
+        applyContrast(prefs.highContrast);
+        savePrefs();
+      }
 
       if (themeToggle) {
         themeToggle.addEventListener('click', function () {
-          const nextTheme = document.body.classList.contains('dark-theme') ? 'light' : 'dark';
-          localStorage.setItem(storageKey, nextTheme);
-          applyTheme(nextTheme);
+          prefs.theme = document.body.classList.contains('dark-theme') ? 'light' : 'dark';
+          updateControls();
         });
       }
+
+      if (increaseText) {
+        increaseText.addEventListener('click', function () {
+          if (prefs.textSize === 'normal') {
+            prefs.textSize = 'large';
+          } else if (prefs.textSize === 'large') {
+            prefs.textSize = 'xlarge';
+          }
+          updateControls();
+        });
+      }
+
+      if (decreaseText) {
+        decreaseText.addEventListener('click', function () {
+          if (prefs.textSize === 'xlarge') {
+            prefs.textSize = 'large';
+          } else if (prefs.textSize === 'large') {
+            prefs.textSize = 'normal';
+          }
+          updateControls();
+        });
+      }
+
+      if (contrastToggle) {
+        contrastToggle.addEventListener('click', function () {
+          prefs.highContrast = !prefs.highContrast;
+          updateControls();
+        });
+      }
+
+      updateControls();
     })();
   </script>
 </body>
