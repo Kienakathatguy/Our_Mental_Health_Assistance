@@ -25,6 +25,11 @@
                     <div class="bubble">{{ msg.content | trim }}</div>
                     <div class="message-status">
                         {% if msg.role == 'user' %}Đã gửi{% else %}Đã trả lời{% endif %}
+                        {% if msg.role == 'assistant' %}
+                            <form method="POST" action="{{ url_for('save_chat_to_diary', message_id=msg.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-info ms-2">💾 Lưu vào nhật ký</button>
+                            </form>
+                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
@@ -145,6 +150,14 @@
                 if (input) {
                     adjustTextarea();
                     input.addEventListener('input', adjustTextarea);
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            if (input.value.trim()) {
+                                form.dispatchEvent(new Event('submit'));
+                            }
+                        }
+                    });
                 }
 
                 const quickActions = document.querySelectorAll('.quick-action');

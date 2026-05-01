@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from flask_bcrypt import Bcrypt
@@ -17,6 +17,8 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(150), nullable=False, unique=True)
     password_hash = db.Column(db.String(200), nullable=False)
     entries = db.relationship('DiaryEntry', backref='author', lazy=True)
+    emotional_insights = db.relationship('EmotionalInsight', backref='user', lazy=True, cascade='all, delete-orphan')
+    chat_messages = db.relationship('ChatMessage', backref='user', lazy=True, cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -99,7 +101,36 @@ class ChatMessage(db.Model):
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    author = db.relationship('User', backref='chat_messages', lazy=True)
+
+class EmotionalInsight(db.Model):
+    """Stores emotional patterns and insights detected from user messages.
+    
+    This enables the chatbot to remember and reference user patterns over time,
+    making responses more personalized and contextual.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Emotional signal type: 'stress', 'anxiety', 'sadness', 'burnout', 'overwhelm', etc.
+    emotion_type = db.Column(db.String(50), nullable=False)
+    
+    # Description of the insight/pattern
+    description = db.Column(db.Text, nullable=False)
+    
+    # Context or trigger (e.g., "before exams", "during group projects")
+    trigger = db.Column(db.String(200))
+    
+    # Frequency: how often this pattern occurs
+    frequency = db.Column(db.String(50), default='occasional')  # rare, occasional, frequent
+    
+    # Last observed date
+    last_observed = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # When this insight was created
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<EmotionalInsight {self.emotion_type} for user {self.user_id}>"
 
     def __repr__(self):
         return f"<ChatMessage {self.role} user={self.user_id}>"

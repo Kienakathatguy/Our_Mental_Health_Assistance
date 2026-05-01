@@ -26,7 +26,7 @@
                 if (container) {
                     const emptyMsg = document.createElement('div');
                     emptyMsg.className = 'alert alert-info';
-                    emptyMsg.innerHTML = '<p>Chưa có bài viết nào. Hãy <a href="/create_post">đăng bài mới</a> để bắt đầu!</p>';
+                    emptyMsg.innerHTML = '<p>Chưa có bài viết nào. Hãy <a href="{{ url_for("create_post") }}">đăng bài mới</a> để bắt đầu!</p>';
                     container.parentElement.appendChild(emptyMsg);
                 }
             }

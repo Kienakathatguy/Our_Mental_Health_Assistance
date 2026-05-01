@@ -2,8 +2,14 @@ import os
 import time
 import textwrap
 from google import genai
+from services.emotional_analysis import (
+    detect_crisis_signals,
+    analyze_and_store_insights,
+    generate_personalized_prompt_injection,
+    get_crisis_response
+)
 
-def call_chatbot_api(messages):
+def call_chatbot_api(messages, user_id: int = None):
     api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key:
@@ -56,8 +62,33 @@ def call_chatbot_api(messages):
         - Xưng hô "mình - cậu".
         - Sử dụng song song ví dụ cụ thể và đề xuất hành động.
     """)
-
-    for msg in messages:
+    # Extract the latest user message for analysis
+    latest_user_message = None
+    for msg in reversed(messages):
+        if msg.get("role") == "user":
+            latest_user_message = msg.get("content", "")
+            break
+    
+    # Crisis detection - highest priority
+    if latest_user_message:
+        is_crisis, crisis_type = detect_crisis_signals(latest_user_message)
+        if is_crisis:
+            return get_crisis_response()
+        
+        # Analyze and store emotional insights for future personalization
+        if user_id:
+            analyze_and_store_insights(user_id, latest_user_message)
+    
+    # Inject personalized emotional context if user_id provided
+    if user_id:
+        emotional_context = generate_personalized_prompt_injection(user_id)
+        prompt += emotional_context
+    
+    # Build conversation history (limit to last 10-20 messages for performance)
+    max_history = 20
+    recent_messages = messages[-max_history:] if len(messages) > max_history else messages
+    
+    for msg in recent_messages:
         if msg["role"] == "user":
             prompt += f"User: {msg['content']}\n"
         else:
@@ -82,7 +113,17 @@ def call_chatbot_api(messages):
                     model=model,
                     contents=prompt
                 )
-                return response.text.strip()
+                result = response.text.strip()
+                
+                # Prevent empty responses
+                if not result or result.isspace():
+                    continue
+                
+                # Trim excessively long responses (max ~1500 tokens ~6000 chars)
+                if len(result) > 6000:
+                    result = result[:5997] + "..."
+                
+                return result
             except Exception as e:
                 print(f"Gemini ERROR ({model}) attempt {attempt}:", e)
                 if not _is_retryable_error(e) or attempt == 3:

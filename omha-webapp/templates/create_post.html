@@ -3,14 +3,20 @@
 
 {% block content %}
     <h2>Đăng bài mới</h2>
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data" novalidate>
+        {{ form.hidden_tag() }}
         <div class="mb-3">
-            <label for="title" class="form-label">Tiêu đề</label>
-            <input type="text" class="form-control" id="title" name="title" required>
+            {{ form.title.label(class="form-label") }}
+            {{ form.title(class="form-control", required=True) }}
         </div>
         <div class="mb-3">
-            <label for="content" class="form-label">Nội dung</label>
-            <textarea class="form-control" id="content" name="content" rows="5" required></textarea>
+            {{ form.content.label(class="form-label") }}
+            {{ form.content(class="form-control", rows="5", required=True) }}
+        </div>
+        <div class="mb-3">
+            {{ form.image.label(class="form-label") }}
+            {{ form.image(class="form-control") }}
+            <small class="form-text text-muted">Chọn hình ảnh (tùy chọn, chỉ JPG, PNG, JPEG)</small>
         </div>
         <button type="submit" class="btn btn-primary">Đăng bài</button>
     </form>

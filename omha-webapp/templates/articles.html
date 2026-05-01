@@ -11,15 +11,24 @@
 
 <!-- Articles List -->
 <div class="row">
-    {% for article in articles %}
+    {% for item in all_content %}
         <div class="col-md-4 mb-4">
             <div class="card shadow-sm">
-                <img src="{{ article.image_url }}" class="card-img-top" alt="{{ article.title }}">
-                <div class="card-body">
-                    <h5 class="card-title">{{ article.title }}</h5>
-                    <p class="card-text">{{ article.short_description }}</p>
-                    <a href="{{ url_for('view_article', article_id=article.id) }}" class="btn btn-primary">Xem chi tiết</a>
-                </div>
+                {% if item.__class__.__name__ == 'Article' %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.title }}</h5>
+                        <p class="card-text">{{ item.content[:150] }}...</p>
+                        <p class="text-muted small">Tác giả: {{ item.author }} | {{ item.date_posted.strftime('%d/%m/%Y') }}</p>
+                        <a href="{{ url_for('view_article', article_id=item.id) }}" class="btn btn-primary">Xem chi tiết</a>
+                    </div>
+                {% elif item.__class__.__name__ == 'Video' %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.title }}</h5>
+                        <p class="card-text">{{ item.description[:150] if item.description else 'Video hữu ích về sức khỏe tâm lý' }}...</p>
+                        <p class="text-muted small">{{ item.date_posted.strftime('%d/%m/%Y') }}</p>
+                        <a href="{{ item.video_url }}" target="_blank" class="btn btn-success">Xem video</a>
+                    </div>
+                {% endif %}
             </div>
         </div>
     {% endfor %}

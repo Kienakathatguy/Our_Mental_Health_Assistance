@@ -13,13 +13,13 @@
         {% if post.image %}
             <div>
                 <h4>Image:</h4>
-                <img src="{{ url_for('static', filename=post.image) }}" alt="Post Image" class="img-fluid">
+                <img src="{{ url_for('uploaded_file', filename=post.image) }}" alt="Post Image" class="img-fluid">
             </div>
         {% endif %}
 
         <hr>
         <h3>Comments</h3>
-        <form method="POST">
+        <form method="POST" novalidate>
             <div class="form-group">
                 <label for="content">Your Comment</label>
                 <textarea class="form-control" name="content" rows="3" required></textarea>
