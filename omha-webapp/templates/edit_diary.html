@@ -4,15 +4,33 @@
 <div class="card shadow-sm p-4 mb-4 bg-white rounded">
     <h2 class="mb-3 text-primary">📝 Chỉnh sửa ghi chép</h2>
     <form method="post">
-        <label class="mb-1">🌈 Cảm xúc:</label>
-        <select name="emotion" class="form-select mb-3">
-            <option value="🙂" {% if entry.emotion == "🙂" %}selected{% endif %}>Vui vẻ 🙂</option>
-            <option value="😢" {% if entry.emotion == "😢" %}selected{% endif %}>Buồn 😢</option>
-            <option value="😡" {% if entry.emotion == "😡" %}selected{% endif %}>Tức giận 😡</option>
-            <option value="😨" {% if entry.emotion == "😨" %}selected{% endif %}>Lo lắng 😨</option>
-            <option value="😴" {% if entry.emotion == "😴" %}selected{% endif %}>Mệt mỏi 😴</option>
-            <option value="❤️" {% if entry.emotion == "❤️" %}selected{% endif %}>Biết ơn ❤️</option>
-        </select>
+        <div class="mb-3">
+            <label class="mb-1">📝 Tiêu đề nhật ký</label>
+            <input type="text" name="title" class="form-control" value="{{ entry.title }}" placeholder="Tiêu đề ngắn gọn cho ghi chép này">
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="mb-1">🌈 Cảm xúc:</label>
+                <select name="emotion" class="form-select">
+                    <option value="🙂" {% if entry.emotion == "🙂" %}selected{% endif %}>Vui vẻ 🙂</option>
+                    <option value="😢" {% if entry.emotion == "😢" %}selected{% endif %}>Buồn 😢</option>
+                    <option value="😡" {% if entry.emotion == "😡" %}selected{% endif %}>Tức giận 😡</option>
+                    <option value="😨" {% if entry.emotion == "😨" %}selected{% endif %}>Lo lắng 😨</option>
+                    <option value="😴" {% if entry.emotion == "😴" %}selected{% endif %}>Mệt mỏi 😴</option>
+                    <option value="❤️" {% if entry.emotion == "❤️" %}selected{% endif %}>Biết ơn ❤️</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="mb-1">🎨 Chủ đề màu</label>
+                <select name="theme" class="form-select">
+                    <option value="default" {% if entry.theme == 'default' %}selected{% endif %}>Mặc định</option>
+                    <option value="calm" {% if entry.theme == 'calm' %}selected{% endif %}>Xanh dịu</option>
+                    <option value="warm" {% if entry.theme == 'warm' %}selected{% endif %}>Vàng ấm</option>
+                    <option value="fresh" {% if entry.theme == 'fresh' %}selected{% endif %}>Xanh tươi</option>
+                </select>
+            </div>
+        </div>
 
         <textarea class="form-control mb-3 p-3" name="entry" rows="6" required>{{ entry.content }}</textarea>
         <button class="btn btn-primary">💾 Cập nhật</button>

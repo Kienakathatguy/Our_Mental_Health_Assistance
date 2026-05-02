@@ -32,8 +32,10 @@ class User(db.Model, UserMixin):
 
 class DiaryEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150))
     content = db.Column(db.Text, nullable=False)
     emotion = db.Column(db.String(20))  # 👈 Thêm cảm xúc
+    theme = db.Column(db.String(50), default='default')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Thêm khóa ngoại liên kết với bảng User

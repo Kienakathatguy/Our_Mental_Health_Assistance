@@ -51,6 +51,69 @@ EMOTIONAL_SIGNALS = {
     ]
 }
 
+JOURNAL_PROMPTS = [
+    'Hôm nay bạn muốn ghi lại điều gì? Hãy bắt đầu bằng một câu đơn giản.',
+    'Viết về một khoảnh khắc vừa qua khiến bạn cảm thấy nhẹ nhõm hoặc khó chịu.',
+    'Mô tả một điều bạn biết ơn hôm nay, dù nhỏ bé đến đâu.',
+    'Bạn đã gặp phải thử thách nào hôm nay? Bạn đã phản ứng thế nào?',
+    'Hãy kể về cảm xúc hiện tại của bạn và điều bạn muốn lắng nghe từ chính mình.',
+    'Viết một câu hỏi bạn muốn tự hỏi mình trong một ngày khó khăn.',
+]
+
+EMOTION_PROMPTS = {
+    '🙂': 'Bạn đang vui. Hãy viết về điều giúp bạn cảm thấy tốt và cách duy trì tâm trạng này.',
+    '😢': 'Bạn đang buồn. Hãy viết về nguyên nhân và điều bạn có thể làm để nhẹ lòng hơn.',
+    '😡': 'Bạn đang giận. Hãy mô tả điều khiến bạn khó chịu và cách bạn muốn đối xử với mình bây giờ.',
+    '😨': 'Bạn đang lo lắng. Hãy viết về điều làm bạn sợ và những điều nhỏ bạn có thể làm để an tâm hơn.',
+    '😴': 'Bạn đang mệt mỏi. Hãy viết về điều làm bạn cạn năng lượng và điều bạn cần nghỉ ngơi.',
+    '❤️': 'Bạn đang biết ơn. Hãy viết về điều người hoặc sự việc khiến bạn cảm thấy ấm lòng.',
+}
+
+REFLECTION_PROMPTS = [
+    'Sau khi viết xong, bạn có thể hỏi: "Điều này giúp mình hiểu gì về bản thân?"',
+    'Bạn có thể ghi thêm: "Mình học được gì từ trải nghiệm này?"',
+    'Hãy suy ngẫm: "Mình cần thứ gì nhất lúc này để cảm thấy ổn hơn?"',
+    'Viết một câu: "Nếu mình nói với người bạn thân, mình sẽ nói gì?"',
+]
+
+JOURNAL_TEMPLATES = {
+    'what_happened': {
+        'label': 'Chuyện gì đã xảy ra / Cảm xúc của tôi',
+        'text': 'Chuyện gì đã xảy ra?\nCảm xúc của tôi là gì?\nMình muốn điều gì tiếp theo?'
+    },
+    'what_i_felt': {
+        'label': 'Điều tôi cảm nhận / Điều tôi cần',
+        'text': 'Điều tôi cảm nhận:\nĐiều tôi cần bây giờ: '
+    },
+    'gratitude': {
+        'label': 'Biết ơn / Lấy cảm hứng',
+        'text': 'Mình biết ơn điều gì hôm nay?\nLàm điều đó khiến mình thấy thế nào?'
+    }
+}
+
+
+def get_journal_prompt(emotion=None):
+    """Return a guided journal prompt, adapting to emotion when available."""
+    if emotion and emotion in EMOTION_PROMPTS:
+        return EMOTION_PROMPTS[emotion]
+    if not JOURNAL_PROMPTS:
+        return ''
+    index = datetime.utcnow().day % len(JOURNAL_PROMPTS)
+    return JOURNAL_PROMPTS[index]
+
+
+def get_reflection_prompt():
+    """Return a follow-up reflection prompt."""
+    if not REFLECTION_PROMPTS:
+        return ''
+    index = datetime.utcnow().day % len(REFLECTION_PROMPTS)
+    return REFLECTION_PROMPTS[index]
+
+
+def get_journal_templates():
+    """Return structured journal template options."""
+    return list(JOURNAL_TEMPLATES.values())
+
 
 def detect_crisis_signals(user_message: str) -> tuple[bool, str]:
     """

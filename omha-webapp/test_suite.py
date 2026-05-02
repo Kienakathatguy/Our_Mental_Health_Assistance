@@ -77,19 +77,23 @@ class TestRunner:
             db.session.commit()
 
             entry = DiaryEntry(
+                title="Buổi sáng tươi đẹp",
                 content="Test diary entry",
                 emotion="😊",
+                theme="calm",
                 user_id=user.id
             )
             db.session.add(entry)
             db.session.commit()
 
-            # Verify association
+            # Verify association and personalization fields
             retrieved_entry = DiaryEntry.query.filter_by(user_id=user.id).first()
-            if retrieved_entry and retrieved_entry.content == "Test diary entry":
+            if (retrieved_entry and retrieved_entry.content == "Test diary entry" and
+                    retrieved_entry.title == "Buổi sáng tươi đẹp" and
+                    retrieved_entry.theme == "calm"):
                 self.log_pass("Diary entry user association")
             else:
-                self.log_fail("Diary entry user association", "Entry not found for user")
+                self.log_fail("Diary entry user association", "Entry not found or personalization fields missing")
 
             # Cleanup
             db.session.delete(entry)

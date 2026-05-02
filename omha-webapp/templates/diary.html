@@ -4,29 +4,188 @@
 <div class="card shadow-sm p-4 mb-4 bg-white rounded">
     <h2 class="mb-3 text-primary">📝 Ghi chép cảm xúc của bạn</h2>
     <form method="post">
-        <label class="mb-1">🌤️ Bạn đang cảm thấy thế nào?</label>
-        <select name="emotion" class="form-select mb-3">
-            <option value="🙂">Vui vẻ 🙂</option>
-            <option value="😢">Buồn 😢</option>
-            <option value="😡">Tức giận 😡</option>
-            <option value="😨">Lo lắng 😨</option>
-            <option value="😴">Mệt mỏi 😴</option>
-            <option value="❤️">Biết ơn ❤️</option>
-        </select>
-    
-        <textarea class="form-control mb-3 p-3" name="entry" rows="6"
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="mb-1">📝 Tiêu đề nhật ký</label>
+                <input type="text" name="title" class="form-control" placeholder="Tiêu đề ngắn gọn cho ghi chép này">
+            </div>
+            <div class="col-md-6">
+                <label class="mb-1">🎨 Chủ đề màu</label>
+                <select name="theme" class="form-select">
+                    <option value="default">Mặc định</option>
+                    <option value="calm">Xanh dịu</option>
+                    <option value="warm">Vàng ấm</option>
+                    <option value="fresh">Xanh tươi</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row align-items-end mb-3">
+            <div class="col-md-6">
+                <label class="mb-1">🌤️ Bạn đang cảm thấy thế nào?</label>
+                <select id="entry-emotion" name="emotion" class="form-select">
+                    <option value="🙂">Vui vẻ 🙂</option>
+                    <option value="😢">Buồn 😢</option>
+                    <option value="😡">Tức giận 😡</option>
+                    <option value="😨">Lo lắng 😨</option>
+                    <option value="😴">Mệt mỏi 😴</option>
+                    <option value="❤️">Biết ơn ❤️</option>
+                </select>
+            </div>
+            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                <div class="btn-group" role="group" aria-label="Chế độ nhật ký">
+                    <button type="button" id="full-mode-btn" class="btn btn-outline-primary active">Ghi đầy đủ</button>
+                    <button type="button" id="quick-mode-btn" class="btn btn-outline-primary">Ghi nhanh</button>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" name="mode" id="journal-mode" value="full">
+
+        <div class="alert alert-info mb-3" role="status">
+            <strong>Gợi ý viết:</strong>
+            <span id="journal-prompt">{{ journal_prompt }}</span>
+        </div>
+
+        <div class="journal-toolbar mb-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-format="bold"><strong>B</strong></button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-format="italic"><em>I</em></button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-format="title">Tiêu đề</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="😊">😊</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="❤️">❤️</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="✨">✨</button>
+        </div>
+
+        <textarea class="form-control mb-3 p-3" name="entry" id="diary-entry" rows="6"
             placeholder="Bạn đang cảm thấy gì?..." required></textarea>
+
+        <div class="mb-3">
+            <label class="form-label">Mẫu ghi nhanh</label>
+            <div class="d-flex flex-wrap gap-2">
+                {% for template in journal_templates %}
+                    <button type="button" class="btn btn-outline-secondary btn-sm template-btn"
+                        data-index="{{ loop.index0 }}">
+                        {{ template.label }}
+                    </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="mb-4 text-muted small">
+            <strong>Suy ngẫm thêm:</strong> {{ reflection_prompt }}
+        </div>
+
         <button class="btn btn-success">Lưu nhật ký</button>
     </form>
 </div>
 
 <hr class="my-4">
 
+<script>
+    const emotionPrompts = {{ emotion_prompts | tojson | safe }};
+    const journalTemplates = {{ journal_templates | tojson | safe }};
+    const defaultPrompt = document.getElementById('journal-prompt').textContent.trim();
+    const promptElement = document.getElementById('journal-prompt');
+    const entryEmotion = document.getElementById('entry-emotion');
+    const entryTextarea = document.getElementById('diary-entry');
+    const journalModeInput = document.getElementById('journal-mode');
+    const fullModeBtn = document.getElementById('full-mode-btn');
+    const quickModeBtn = document.getElementById('quick-mode-btn');
+    const templateButtons = document.querySelectorAll('.template-btn');
+
+    function setJournalMode(mode) {
+        journalModeInput.value = mode;
+        if (mode === 'quick') {
+            fullModeBtn.classList.remove('active');
+            quickModeBtn.classList.add('active');
+            entryTextarea.rows = 4;
+            entryTextarea.placeholder = 'Ghi nhanh một vài dòng...';
+        } else {
+            quickModeBtn.classList.remove('active');
+            fullModeBtn.classList.add('active');
+            entryTextarea.rows = 6;
+            entryTextarea.placeholder = 'Bạn đang cảm thấy gì?...';
+        }
+    }
+
+    entryEmotion.addEventListener('change', function () {
+        const prompt = emotionPrompts[this.value] || defaultPrompt;
+        promptElement.textContent = prompt;
+    });
+
+    fullModeBtn.addEventListener('click', function () {
+        setJournalMode('full');
+    });
+    quickModeBtn.addEventListener('click', function () {
+        setJournalMode('quick');
+    });
+
+    function wrapSelection(markupStart, markupEnd) {
+        const start = entryTextarea.selectionStart;
+        const end = entryTextarea.selectionEnd;
+        const selectedText = entryTextarea.value.substring(start, end);
+        const before = entryTextarea.value.substring(0, start);
+        const after = entryTextarea.value.substring(end);
+        entryTextarea.value = before + markupStart + selectedText + markupEnd + after;
+        const cursor = end + markupStart.length + markupEnd.length;
+        entryTextarea.setSelectionRange(cursor, cursor);
+        entryTextarea.focus();
+    }
+
+    function insertText(text) {
+        const start = entryTextarea.selectionStart;
+        const end = entryTextarea.selectionEnd;
+        const before = entryTextarea.value.substring(0, start);
+        const after = entryTextarea.value.substring(end);
+        entryTextarea.value = before + text + after;
+        const cursor = start + text.length;
+        entryTextarea.setSelectionRange(cursor, cursor);
+        entryTextarea.focus();
+    }
+
+    document.querySelectorAll('[data-format]').forEach(button => {
+        button.addEventListener('click', function () {
+            const format = this.dataset.format;
+            if (format === 'bold') {
+                wrapSelection('**', '**');
+            } else if (format === 'italic') {
+                wrapSelection('*', '*');
+            } else if (format === 'title') {
+                wrapSelection('# ', '');
+            }
+        });
+    });
+
+    document.querySelectorAll('[data-insert]').forEach(button => {
+        button.addEventListener('click', function () {
+            insertText(this.dataset.insert);
+        });
+    });
+
+    templateButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const templateIndex = Number(this.dataset.index);
+            if (!Number.isNaN(templateIndex) && journalTemplates[templateIndex]) {
+                entryTextarea.value = journalTemplates[templateIndex].text;
+            }
+            setJournalMode('full');
+            entryTextarea.focus();
+        });
+    });
+</script>
+
 <h4 class="mb-3 text-secondary">📚 Các ghi chép gần đây</h4>
 {% for entry in entries %}
-    <div class="card mb-3">
-        <div class="card-header bg-light d-flex justify-content-between">
-            <div><strong>🗓️</strong> {{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+    <div class="card mb-3 entry-theme-{{ entry.theme or 'default' }}">
+        <div class="card-header d-flex justify-content-between">
+            <div>
+                <strong>🗓️</strong>
+                {% if entry.title %}
+                    {{ entry.title }}
+                {% else %}
+                    Nhật ký không tiêu đề
+                {% endif %}
+            </div>
             <div><strong>{{ entry.emotion }}</strong></div>
         </div>
         <div class="card-body">

@@ -13,6 +13,12 @@ import os
 
 from models import db, User, DiaryEntry, ForumPost, Comment, Article, Video, ChatMessage, EmotionalInsight, PostForm
 from services.chatbot_service import call_chatbot_api
+from services.emotional_analysis import (
+    get_journal_prompt,
+    get_reflection_prompt,
+    get_journal_templates,
+    EMOTION_PROMPTS,
+)
 
 load_dotenv()
 
@@ -92,23 +98,45 @@ def uploaded_file(filename):
 @login_required
 def diary():
     if request.method == "POST":
+        title = request.form.get("title", "").strip()
         content = request.form.get("entry", "").strip()
+        emotion = request.form.get("emotion", "")
+        theme = request.form.get("theme", "default")
+        mode = request.form.get("mode", "full")
         if not content:
             flash("Vui lòng nhập nội dung nhật ký!", "warning")
             return redirect("/diary")
-        emotion = request.form.get("emotion", "")
         try:
-            new_entry = DiaryEntry(content=content, emotion=emotion, user_id=current_user.id)
+            new_entry = DiaryEntry(
+                title=title,
+                content=content,
+                emotion=emotion,
+                theme=theme,
+                user_id=current_user.id,
+            )
             db.session.add(new_entry)
             db.session.commit()
-            flash("Lưu nhật ký thành công!", "success")
+            if mode == "quick":
+                flash("Lưu nhật ký nhanh thành công!", "success")
+            else:
+                flash("Lưu nhật ký thành công!", "success")
         except Exception as e:
             db.session.rollback()
             flash(f"Lỗi khi lưu nhật ký: {str(e)}", "danger")
         return redirect("/diary")
 
     entries = DiaryEntry.query.filter_by(user_id=current_user.id).order_by(DiaryEntry.created_at.desc()).all()
-    return render_template("diary.html", entries=entries)
+    prompt = get_journal_prompt()
+    reflection_prompt = get_reflection_prompt()
+    templates = get_journal_templates()
+    return render_template(
+        "diary.html",
+        entries=entries,
+        journal_prompt=prompt,
+        reflection_prompt=reflection_prompt,
+        journal_templates=templates,
+        emotion_prompts=EMOTION_PROMPTS,
+    )
 
 @app.route("/diary/edit/<int:id>", methods=["GET", "POST"])
 @login_required
@@ -118,13 +146,17 @@ def edit_diary(id):
         flash("You are not authorised to edit this entry.", "danger")
         return redirect("/diary")
     if request.method == "POST":
+        title = request.form.get("title", "").strip()
         content = request.form.get("entry", "").strip()
+        theme = request.form.get("theme", entry.theme)
         if not content:
             flash("Vui lòng nhập nội dung!", "warning")
             return redirect(f"/diary/edit/{id}")
         try:
+            entry.title = title
             entry.content = content
             entry.emotion = request.form.get("emotion", entry.emotion)
+            entry.theme = theme
             db.session.commit()
             flash("Cập nhật nhật ký thành công!", "success")
         except Exception as e:
