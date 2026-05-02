@@ -3,7 +3,7 @@
 
 <div class="card shadow-sm p-4 mb-4 bg-white rounded">
     <h2 class="mb-3 text-primary">📝 Chỉnh sửa ghi chép</h2>
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         <div class="mb-3">
             <label class="mb-1">📝 Tiêu đề nhật ký</label>
             <input type="text" name="title" class="form-control" value="{{ entry.title }}" placeholder="Tiêu đề ngắn gọn cho ghi chép này">
@@ -24,11 +24,67 @@
             <div class="col-md-6">
                 <label class="mb-1">🎨 Chủ đề màu</label>
                 <select name="theme" class="form-select">
-                    <option value="default" {% if entry.theme == 'default' %}selected{% endif %}>Mặc định</option>
+                    <option value="default" {% if entry.theme == 'default' or not entry.theme %}selected{% endif %}>Mặc định</option>
                     <option value="calm" {% if entry.theme == 'calm' %}selected{% endif %}>Xanh dịu</option>
                     <option value="warm" {% if entry.theme == 'warm' %}selected{% endif %}>Vàng ấm</option>
                     <option value="fresh" {% if entry.theme == 'fresh' %}selected{% endif %}>Xanh tươi</option>
                 </select>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="mb-1">✍️ Phông chữ</label>
+                <select name="font" class="form-select">
+                    <option value="default" {% if entry.font == 'default' or not entry.font %}selected{% endif %}>Mặc định</option>
+                    <option value="serif" {% if entry.font == 'serif' %}selected{% endif %}>Serif cổ điển</option>
+                    <option value="handwriting" {% if entry.font == 'handwriting' %}selected{% endif %}>Viết tay</option>
+                    <option value="modern" {% if entry.font == 'modern' %}selected{% endif %}>Hiện đại</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="mb-1">📄 Nền giấy</label>
+                <select name="background" class="form-select">
+                    <option value="default" {% if entry.background == 'default' or not entry.background %}selected{% endif %}>Mặc định</option>
+                    <option value="lined" {% if entry.background == 'lined' %}selected{% endif %}>Giấy kẻ dòng</option>
+                    <option value="dotted" {% if entry.background == 'dotted' %}selected{% endif %}>Giấy chấm bi</option>
+                    <option value="plain" {% if entry.background == 'plain' %}selected{% endif %}>Giấy trơn</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="mb-1">📸 Ảnh đính kèm</label>
+            <input type="file" name="image" class="form-control" accept="image/*">
+            {% if entry.image %}
+                <div class="mt-2">
+                    <small class="text-muted">Ảnh hiện tại:</small><br>
+                    <img src="{{ url_for('uploaded_file', filename=entry.image) }}" alt="Current image" class="img-thumbnail" style="max-width: 200px;">
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label class="mb-1">🏷️ Sticker</label>
+            <div class="sticker-library mb-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌟">🌟</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="💖">💖</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌸">🌸</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌈">🌈</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="⭐">⭐</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌙">🌙</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="☀️">☀️</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌻">🌻</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🎀">🎀</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🦋">🦋</button>
+            </div>
+            <input type="hidden" name="stickers" id="selected-stickers" value="{{ entry.stickers or '' }}">
+            <div id="selected-stickers-display" class="mb-2">
+                {% if entry.stickers %}
+                    {% for sticker in entry.stickers | from_json %}
+                        <span class="sticker-display">{{ sticker }}</span>
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
 
@@ -37,5 +93,45 @@
         <a href="/diary" class="btn btn-secondary">Quay lại</a>
     </form>
 </div>
+
+<script>
+    const stickerButtons = document.querySelectorAll('.sticker-btn');
+    const selectedStickersInput = document.getElementById('selected-stickers');
+    const selectedStickersDisplay = document.getElementById('selected-stickers-display');
+    let selectedStickers = {{ entry.stickers | from_json | default([]) | tojson | safe }};
+
+    function updateSelectedStickers() {
+        selectedStickersInput.value = JSON.stringify(selectedStickers);
+        selectedStickersDisplay.innerHTML = selectedStickers.map(sticker =>
+            `<span class="sticker-display">${sticker}</span>`
+        ).join(' ');
+    }
+
+    function addSticker(sticker) {
+        if (!selectedStickers.includes(sticker)) {
+            selectedStickers.push(sticker);
+            updateSelectedStickers();
+        }
+    }
+
+    function removeSticker(sticker) {
+        selectedStickers = selectedStickers.filter(s => s !== sticker);
+        updateSelectedStickers();
+    }
+
+    stickerButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const sticker = this.dataset.sticker;
+            addSticker(sticker);
+        });
+    });
+
+    selectedStickersDisplay.addEventListener('click', function (e) {
+        if (e.target.classList.contains('sticker-display')) {
+            const sticker = e.target.textContent;
+            removeSticker(sticker);
+        }
+    });
+</script>
 
 {% endblock %}

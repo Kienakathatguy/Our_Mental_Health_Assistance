@@ -3,7 +3,7 @@
 
 <div class="card shadow-sm p-4 mb-4 bg-white rounded">
     <h2 class="mb-3 text-primary">📝 Ghi chép cảm xúc của bạn</h2>
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label class="mb-1">📝 Tiêu đề nhật ký</label>
@@ -16,6 +16,27 @@
                     <option value="calm">Xanh dịu</option>
                     <option value="warm">Vàng ấm</option>
                     <option value="fresh">Xanh tươi</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="mb-1">✍️ Phông chữ</label>
+                <select name="font" class="form-select">
+                    <option value="default">Mặc định</option>
+                    <option value="serif">Serif cổ điển</option>
+                    <option value="handwriting">Viết tay</option>
+                    <option value="modern">Hiện đại</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="mb-1">📄 Nền giấy</label>
+                <select name="background" class="form-select">
+                    <option value="default">Mặc định</option>
+                    <option value="lined">Giấy kẻ dòng</option>
+                    <option value="dotted">Giấy chấm bi</option>
+                    <option value="plain">Giấy trơn</option>
                 </select>
             </div>
         </div>
@@ -40,7 +61,13 @@
             </div>
         </div>
 
+        <div class="mb-3">
+            <label class="mb-1">📸 Ảnh đính kèm</label>
+            <input type="file" name="image" class="form-control" accept="image/*">
+        </div>
+
         <input type="hidden" name="mode" id="journal-mode" value="full">
+        <input type="hidden" name="stickers" id="selected-stickers" value="">
 
         <div class="alert alert-info mb-3" role="status">
             <strong>Gợi ý viết:</strong>
@@ -54,6 +81,23 @@
             <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="😊">😊</button>
             <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="❤️">❤️</button>
             <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="✨">✨</button>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">🏷️ Sticker</label>
+            <div class="sticker-library mb-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌟">🌟</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="💖">💖</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌸">🌸</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌈">🌈</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="⭐">⭐</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌙">🌙</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="☀️">☀️</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌻">🌻</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🎀">🎀</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🦋">🦋</button>
+            </div>
+            <div id="selected-stickers-display" class="mb-2"></div>
         </div>
 
         <textarea class="form-control mb-3 p-3" name="entry" id="diary-entry" rows="6"
@@ -92,6 +136,44 @@
     const fullModeBtn = document.getElementById('full-mode-btn');
     const quickModeBtn = document.getElementById('quick-mode-btn');
     const templateButtons = document.querySelectorAll('.template-btn');
+    const stickerButtons = document.querySelectorAll('.sticker-btn');
+    const selectedStickersInput = document.getElementById('selected-stickers');
+    const selectedStickersDisplay = document.getElementById('selected-stickers-display');
+    let selectedStickers = [];
+
+    function setJournalMode(mode) {
+        journalModeInput.value = mode;
+        if (mode === 'quick') {
+            fullModeBtn.classList.remove('active');
+            quickModeBtn.classList.add('active');
+            entryTextarea.rows = 4;
+            entryTextarea.placeholder = 'Ghi nhanh một vài dòng...';
+        } else {
+            quickModeBtn.classList.remove('active');
+            fullModeBtn.classList.add('active');
+            entryTextarea.rows = 6;
+            entryTextarea.placeholder = 'Bạn đang cảm thấy gì?...';
+        }
+    }
+
+    function updateSelectedStickers() {
+        selectedStickersInput.value = JSON.stringify(selectedStickers);
+        selectedStickersDisplay.innerHTML = selectedStickers.map(sticker =>
+            `<span class="sticker-display">${sticker}</span>`
+        ).join(' ');
+    }
+
+    function addSticker(sticker) {
+        if (!selectedStickers.includes(sticker)) {
+            selectedStickers.push(sticker);
+            updateSelectedStickers();
+        }
+    }
+
+    function removeSticker(sticker) {
+        selectedStickers = selectedStickers.filter(s => s !== sticker);
+        updateSelectedStickers();
+    }
 
     function setJournalMode(mode) {
         journalModeInput.value = mode;
@@ -162,6 +244,20 @@
         });
     });
 
+    stickerButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const sticker = this.dataset.sticker;
+            addSticker(sticker);
+        });
+    });
+
+    selectedStickersDisplay.addEventListener('click', function (e) {
+        if (e.target.classList.contains('sticker-display')) {
+            const sticker = e.target.textContent;
+            removeSticker(sticker);
+        }
+    });
+
     templateButtons.forEach(button => {
         button.addEventListener('click', function () {
             const templateIndex = Number(this.dataset.index);
@@ -176,7 +272,7 @@
 
 <h4 class="mb-3 text-secondary">📚 Các ghi chép gần đây</h4>
 {% for entry in entries %}
-    <div class="card mb-3 entry-theme-{{ entry.theme or 'default' }}">
+    <div class="card mb-3 entry-theme-{{ entry.theme or 'default' }} entry-font-{{ entry.font or 'default' }} entry-background-{{ entry.background or 'default' }}">
         <div class="card-header d-flex justify-content-between">
             <div>
                 <strong>🗓️</strong>
@@ -189,7 +285,19 @@
             <div><strong>{{ entry.emotion }}</strong></div>
         </div>
         <div class="card-body">
+            {% if entry.image %}
+                <div class="entry-image mb-3">
+                    <img src="{{ url_for('uploaded_file', filename=entry.image) }}" alt="Entry image" class="img-fluid rounded">
+                </div>
+            {% endif %}
             <p style="white-space: pre-wrap;">{{ entry.content }}</p>
+            {% if entry.stickers %}
+                <div class="entry-stickers mt-2">
+                    {% for sticker in entry.stickers | from_json %}
+                        <span class="sticker-display">{{ sticker }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
             <a href="/diary/edit/{{ entry.id }}" class="btn btn-sm btn-outline-primary">✏️ Sửa</a>
             <a href="/diary/delete/{{ entry.id }}" class="btn btn-sm btn-outline-danger">🗑️ Xóa</a>
         </div>

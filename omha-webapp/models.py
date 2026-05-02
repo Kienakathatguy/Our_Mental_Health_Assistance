@@ -36,6 +36,10 @@ class DiaryEntry(db.Model):
     content = db.Column(db.Text, nullable=False)
     emotion = db.Column(db.String(20))  # 👈 Thêm cảm xúc
     theme = db.Column(db.String(50), default='default')
+    font = db.Column(db.String(50), default='default')
+    background = db.Column(db.String(50), default='default')
+    image = db.Column(db.String(200))  # Path to uploaded image
+    stickers = db.Column(db.Text)  # JSON string of selected stickers
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Thêm khóa ngoại liên kết với bảng User

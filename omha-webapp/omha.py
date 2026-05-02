@@ -102,7 +102,20 @@ def diary():
         content = request.form.get("entry", "").strip()
         emotion = request.form.get("emotion", "")
         theme = request.form.get("theme", "default")
+        font = request.form.get("font", "default")
+        background = request.form.get("background", "default")
+        stickers = request.form.get("stickers", "")
         mode = request.form.get("mode", "full")
+
+        # Handle image upload
+        image_path = None
+        if 'image' in request.files:
+            image = request.files['image']
+            if image and allowed_file(image.filename):
+                filename = secure_filename(image.filename)
+                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                image_path = filename
+
         if not content:
             flash("Vui lòng nhập nội dung nhật ký!", "warning")
             return redirect("/diary")
@@ -112,6 +125,10 @@ def diary():
                 content=content,
                 emotion=emotion,
                 theme=theme,
+                font=font,
+                background=background,
+                image=image_path,
+                stickers=stickers,
                 user_id=current_user.id,
             )
             db.session.add(new_entry)
@@ -149,6 +166,18 @@ def edit_diary(id):
         title = request.form.get("title", "").strip()
         content = request.form.get("entry", "").strip()
         theme = request.form.get("theme", entry.theme)
+        font = request.form.get("font", entry.font)
+        background = request.form.get("background", entry.background)
+        stickers = request.form.get("stickers", entry.stickers)
+
+        # Handle image upload
+        if 'image' in request.files:
+            image = request.files['image']
+            if image and allowed_file(image.filename):
+                filename = secure_filename(image.filename)
+                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                entry.image = filename
+
         if not content:
             flash("Vui lòng nhập nội dung!", "warning")
             return redirect(f"/diary/edit/{id}")
@@ -157,6 +186,9 @@ def edit_diary(id):
             entry.content = content
             entry.emotion = request.form.get("emotion", entry.emotion)
             entry.theme = theme
+            entry.font = font
+            entry.background = background
+            entry.stickers = stickers
             db.session.commit()
             flash("Cập nhật nhật ký thành công!", "success")
         except Exception as e:
