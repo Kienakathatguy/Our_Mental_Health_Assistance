@@ -639,6 +639,32 @@ body.dark-theme .quick-action:hover {
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.skeleton-loader-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Alert skeleton */
+.skeleton-loader-content .alert {
+    border: 1px solid #d1ecf1;
+    background-color: #d1ecf1;
+    border-radius: 4px;
+    padding: 12px 16px;
+}
+
+/* Card header skeleton */
+.skeleton-loader-content .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px 16px;
+    border-radius: 8px 8px 0 0;
+}
+
+.skeleton-loader-content .card-body {
+    padding: 16px;
 }
 
 @keyframes skeleton-shimmer {
