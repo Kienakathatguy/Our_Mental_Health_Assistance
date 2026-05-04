@@ -68,50 +68,76 @@
 
         <input type="hidden" name="mode" id="journal-mode" value="full">
         <input type="hidden" name="stickers" id="selected-stickers" value="">
+        <input type="hidden" name="scrapbook_data" id="scrapbook-data" value="">
 
         <div class="alert alert-info mb-3" role="status">
             <strong>Gợi ý viết:</strong>
             <span id="journal-prompt">{{ journal_prompt }}</span>
         </div>
 
-        <div class="journal-toolbar mb-2">
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-format="bold"><strong>B</strong></button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-format="italic"><em>I</em></button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-format="title">Tiêu đề</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="😊">😊</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="❤️">❤️</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="✨">✨</button>
-        </div>
+        <!-- Tabs for different input modes -->
+        <ul class="nav nav-tabs mb-3" id="entryTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-entry" type="button" role="tab" aria-controls="text-entry" aria-selected="true">
+                    📝 Text Entry
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="scrapbook-tab" data-bs-toggle="tab" data-bs-target="#scrapbook-entry" type="button" role="tab" aria-controls="scrapbook-entry" aria-selected="false">
+                    ✨ Scrapbook Editor
+                </button>
+            </li>
+        </ul>
 
-        <div class="mb-3">
-            <label class="form-label">🏷️ Sticker</label>
-            <div class="sticker-library mb-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌟">🌟</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="💖">💖</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌸">🌸</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌈">🌈</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="⭐">⭐</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌙">🌙</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="☀️">☀️</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌻">🌻</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🎀">🎀</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🦋">🦋</button>
+        <!-- Tab Content -->
+        <div class="tab-content mb-3" id="entryTabContent">
+            <!-- Traditional Text Entry -->
+            <div class="tab-pane fade show active" id="text-entry" role="tabpanel" aria-labelledby="text-tab">
+                <div class="journal-toolbar mb-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-format="bold"><strong>B</strong></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-format="italic"><em>I</em></button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-format="title">Tiêu đề</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="😊">😊</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="❤️">❤️</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-insert="✨">✨</button>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">🏷️ Sticker</label>
+                    <div class="sticker-library mb-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌟">🌟</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="💖">💖</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌸">🌸</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌈">🌈</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="⭐">⭐</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌙">🌙</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="☀️">☀️</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🌻">🌻</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🎀">🎀</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sticker-btn" data-sticker="🦋">🦋</button>
+                    </div>
+                    <div id="selected-stickers-display" class="mb-2"></div>
+                </div>
+
+                <textarea class="form-control mb-3 p-3" name="entry" id="diary-entry" rows="6"
+                    placeholder="Bạn đang cảm thấy gì?..." required></textarea>
+
+                <div class="mb-3">
+                    <label class="form-label">Mẫu ghi nhanh</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for template in journal_templates %}
+                            <button type="button" class="btn btn-outline-secondary btn-sm template-btn"
+                                data-index="{{ loop.index0 }}">
+                                {{ template.label }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
-            <div id="selected-stickers-display" class="mb-2"></div>
-        </div>
 
-        <textarea class="form-control mb-3 p-3" name="entry" id="diary-entry" rows="6"
-            placeholder="Bạn đang cảm thấy gì?..." required></textarea>
-
-        <div class="mb-3">
-            <label class="form-label">Mẫu ghi nhanh</label>
-            <div class="d-flex flex-wrap gap-2">
-                {% for template in journal_templates %}
-                    <button type="button" class="btn btn-outline-secondary btn-sm template-btn"
-                        data-index="{{ loop.index0 }}">
-                        {{ template.label }}
-                    </button>
-                {% endfor %}
+            <!-- Scrapbook Editor Tab -->
+            <div class="tab-pane fade" id="scrapbook-entry" role="tabpanel" aria-labelledby="scrapbook-tab">
+                <div id="scrapbook-editor"></div>
             </div>
         </div>
 
@@ -119,9 +145,11 @@
             <strong>Suy ngẫm thêm:</strong> {{ reflection_prompt }}
         </div>
 
-        <button class="btn btn-success">Lưu nhật ký</button>
+        <button class="btn btn-success" id="save-diary-btn">Lưu nhật ký</button>
     </form>
 </div>
+
+<script src="{{ url_for('static', filename='scrapbook-editor.js') }}"></script>
 
 <hr class="my-4">
 
@@ -300,6 +328,30 @@
 
     // Apply defaults immediately on page load
     applyPreview();
+
+    // ----------------------------------------------------------------
+    // FORM SUBMISSION — Handle both text and scrapbook entries
+    // ----------------------------------------------------------------
+    document.querySelector('form').addEventListener('submit', function (e) {
+        const activeTab = document.querySelector('.nav-link.active').getAttribute('aria-controls');
+        const entryText = entryTextarea.value.trim();
+        const scrapbookData = document.getElementById('scrapbook-data').value;
+
+        if (activeTab === 'text-entry') {
+            // Text entry requires text
+            if (!entryText) {
+                e.preventDefault();
+                alert('Vui lòng nhập nội dung nhật ký.');
+                entryTextarea.focus();
+            }
+        } else if (activeTab === 'scrapbook-entry') {
+            // Scrapbook entry requires at least scrapbook data
+            if (!scrapbookData || scrapbookData === '{}') {
+                e.preventDefault();
+                alert('Vui lòng tạo một cái gì đó trong trình soạn scrapbook.');
+            }
+        }
+    });
 </script>
 
 <h4 class="mb-3 text-secondary">📚 Các ghi chép gần đây</h4>

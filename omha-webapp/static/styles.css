@@ -981,3 +981,182 @@ body.dark-theme .quick-action:hover {
 .sticker-display:hover {
     transform: scale(1.2);
 }
+
+/* ---- Scrapbook Editor Styles ---- */
+.scrapbook-container {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.scrapbook-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    padding: 15px !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 245, 255, 0.8)) !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+}
+
+.scrapbook-canvas-wrapper {
+    position: relative;
+    background: white;
+    border: 3px dashed #cccccc;
+    border-radius: 8px;
+    overflow: auto;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+#scrapbook-canvas {
+    display: block;
+    cursor: crosshair;
+    background: white;
+    border-radius: 8px;
+}
+
+.scrapbook-elements {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.scrapbook-element {
+    position: absolute;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.scrapbook-text {
+    padding: 8px 12px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid #007bff !important;
+    cursor: move !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    max-width: 200px !important;
+    word-wrap: break-word !important;
+    z-index: 10 !important;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.scrapbook-text:hover {
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.scrapbook-image {
+    max-width: 200px !important;
+    height: auto !important;
+    border: 2px solid #ffc107 !important;
+    cursor: move !important;
+    z-index: 10 !important;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.scrapbook-image:hover {
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.scrapbook-sticker-elem {
+    font-size: 48px !important;
+    cursor: move !important;
+    z-index: 10 !important;
+    user-select: none !important;
+    -webkit-user-select: none;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.scrapbook-sticker-elem:hover {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2)) brightness(1.1);
+}
+
+.scrapbook-content-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    padding: 15px !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 245, 255, 0.8)) !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+}
+
+.scrapbook-tool {
+    transition: all 0.2s ease;
+}
+
+.scrapbook-tool.active {
+    background-color: #007bff !important;
+    color: white !important;
+    border-color: #007bff !important;
+}
+
+.scrapbook-sticker {
+    padding: 8px 12px !important;
+    font-size: 18px !important;
+    min-width: 44px;
+    transition: all 0.2s ease;
+}
+
+.scrapbook-sticker:hover {
+    transform: scale(1.2);
+}
+
+#brush-color {
+    width: 50px !important;
+    height: 32px !important;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1px solid #ccc !important;
+}
+
+#brush-size {
+    width: 100px;
+    cursor: pointer;
+}
+
+#message-input,
+#send-button {
+    transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease, height 0.2s ease;
+}
+
+#message-input {
+    min-height: 50px;
+    max-height: 180px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 22px;
+    padding: 14px 16px;
+    box-shadow: inset 0 2px 12px rgba(15, 23, 42, 0.05);
+    resize: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #scrapbook-canvas {
+        max-width: 100% !important;
+    }
+
+    .scrapbook-toolbar,
+    .scrapbook-content-toolbar {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .scrapbook-toolbar .row,
+    .scrapbook-content-toolbar .row {
+        width: 100%;
+    }
+
+    .scrapbook-text,
+    .scrapbook-image {
+        max-width: 150px !important;
+    }
+}
+}

@@ -99,6 +99,7 @@ def diary():
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         content = request.form.get("entry", "").strip()
+        scrapbook_data = request.form.get("scrapbook_data", "").strip()
         emotion = request.form.get("emotion", "")
         theme = request.form.get("theme", "default")
         font = request.form.get("font", "default")
@@ -115,13 +116,17 @@ def diary():
                 image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 image_path = filename
 
-        if not content:
+        # Use scrapbook data if provided, otherwise use text content
+        final_content = scrapbook_data if scrapbook_data else content
+
+        if not final_content:
             flash("Vui lòng nhập nội dung nhật ký!", "warning")
             return redirect("/diary")
+        
         try:
             new_entry = DiaryEntry(
                 title=title,
-                content=content,
+                content=final_content,
                 emotion=emotion,
                 theme=theme,
                 font=font,
@@ -132,7 +137,9 @@ def diary():
             )
             db.session.add(new_entry)
             db.session.commit()
-            if mode == "quick":
+            if scrapbook_data:
+                flash("Lưu scrapbook thành công!", "success")
+            elif mode == "quick":
                 flash("Lưu nhật ký nhanh thành công!", "success")
             else:
                 flash("Lưu nhật ký thành công!", "success")
@@ -164,6 +171,7 @@ def edit_diary(id):
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         content = request.form.get("entry", "").strip()
+        scrapbook_data = request.form.get("scrapbook_data", "").strip()
         theme = request.form.get("theme", entry.theme)
         font = request.form.get("font", entry.font)
         background = request.form.get("background", entry.background)
@@ -177,12 +185,15 @@ def edit_diary(id):
                 image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 entry.image = filename
 
-        if not content:
+        # Use scrapbook data if provided, otherwise use text content
+        final_content = scrapbook_data if scrapbook_data else content
+
+        if not final_content:
             flash("Vui lòng nhập nội dung!", "warning")
             return redirect(f"/diary/edit/{id}")
         try:
             entry.title = title
-            entry.content = content
+            entry.content = final_content
             entry.emotion = request.form.get("emotion", entry.emotion)
             entry.theme = theme
             entry.font = font
