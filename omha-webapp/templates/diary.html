@@ -126,7 +126,9 @@
 <hr class="my-4">
 
 <script>
+    // eslint-disable-next-line no-undef
     const emotionPrompts = {{ emotion_prompts | tojson | safe }};
+    // eslint-disable-next-line no-undef
     const journalTemplates = {{ journal_templates | tojson | safe }};
     const defaultPrompt = document.getElementById('journal-prompt').textContent.trim();
     const promptElement = document.getElementById('journal-prompt');
