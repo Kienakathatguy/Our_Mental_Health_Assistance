@@ -1,0 +1,42 @@
+{
+  "name": "mental-health-api",
+  "version": "1.0.0",
+  "description": "Production-ready RESTful API for mental health assistance",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_ENV=development nodemon src/server.js",
+    "start": "NODE_ENV=production node src/server.js",
+    "lint": "echo \"No linting configured. Add ESLint if needed.\"",
+    "swagger": "node src/docs/swagger.js"
+  },
+  "keywords": [
+    "express",
+    "rest",
+    "api",
+    "jwt",
+    "mongoose",
+    "mental-health"
+  ],
+  "author": "Our Mental Health Assistance",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.0.0",
+    "helmet": "^7.0.0",
+    "joi": "^17.10.1",
+    "jsonwebtoken": "^9.0.1",
+    "mongoose": "^7.5.2",
+    "morgan": "^1.10.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "xss-clean": "^0.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

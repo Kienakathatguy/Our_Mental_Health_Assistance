@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="card shadow-sm p-4 mb-4 bg-white rounded">
+<div class="card shadow-sm p-4 mb-4 bg-white rounded" id="diary-preview">
     <h2 class="mb-3 text-primary">📝 Ghi chép cảm xúc của bạn</h2>
     <form method="post" enctype="multipart/form-data">
         <div class="row g-3 mb-3">
@@ -268,6 +268,36 @@
             entryTextarea.focus();
         });
     });
+
+    // ----------------------------------------------------------------
+    // LIVE PREVIEW — apply theme / font / background to the write form
+    // ----------------------------------------------------------------
+    const previewEl   = document.getElementById('diary-preview');
+    const themeSelect = document.querySelector('select[name="theme"]');
+    const fontSelect  = document.querySelector('select[name="font"]');
+    const bgSelect    = document.querySelector('select[name="background"]');
+
+    const THEME_CLASSES = ['entry-theme-default','entry-theme-calm','entry-theme-warm','entry-theme-fresh'];
+    const FONT_CLASSES  = ['entry-font-default','entry-font-serif','entry-font-handwriting','entry-font-modern'];
+    const BG_CLASSES    = ['entry-background-default','entry-background-lined','entry-background-dotted','entry-background-plain'];
+
+    function applyClass(classList, allClasses, chosen) {
+        allClasses.forEach(c => classList.remove(c));
+        classList.add(chosen);
+    }
+
+    function applyPreview() {
+        applyClass(previewEl.classList, THEME_CLASSES, 'entry-theme-' + themeSelect.value);
+        applyClass(previewEl.classList, FONT_CLASSES,  'entry-font-'  + fontSelect.value);
+        applyClass(previewEl.classList, BG_CLASSES,    'entry-background-' + bgSelect.value);
+    }
+
+    themeSelect.addEventListener('change', applyPreview);
+    fontSelect.addEventListener('change',  applyPreview);
+    bgSelect.addEventListener('change',    applyPreview);
+
+    // Apply defaults immediately on page load
+    applyPreview();
 </script>
 
 <h4 class="mb-3 text-secondary">📚 Các ghi chép gần đây</h4>

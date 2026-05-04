@@ -24,8 +24,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///site.db')
 db.init_app(app)
 bcrypt = Bcrypt(app)
 migrate = Migrate(app, db)
@@ -401,4 +400,4 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         print("✓ Database initialized")
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=True, host='0.0.0.0', port=int(os.getenv('FLASK_PORT', 5000)))
