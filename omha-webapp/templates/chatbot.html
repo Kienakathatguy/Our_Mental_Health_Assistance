@@ -8,14 +8,11 @@
 
         <!-- CHAT BOX -->
         <div id="chat-box" class="chat-window mb-3">
-            {% set prev_date = None %}
             {% for msg in messages %}
-                {% set msg_date = msg.created_at.date() %}
-                {% if loop.first or msg_date != prev_date %}
+                {% if loop.first or msg.created_at.date() != loop.previtem.created_at.date() %}
                     <div class="day-divider" data-date="{{ msg.created_at.strftime('%Y-%m-%d') }}">
                         <span>{{ msg.created_at.strftime('%d/%m/%Y') }}</span>
                     </div>
-                    {% set prev_date = msg_date %}
                 {% endif %}
                 <div class="chat-message {% if msg.role == 'user' %}user-message{% else %}bot-message{% endif %}" style="--msg-index:{{ loop.index0 }}">
                     <div class="message-meta">
@@ -33,13 +30,6 @@
                     </div>
                 </div>
             {% endfor %}
-        </div>
-
-        <div id="typing-indicator" class="typing-indicator d-none">
-            <span class="indicator-dot"></span>
-            <span class="indicator-dot"></span>
-            <span class="indicator-dot"></span>
-            <span class="typing-text">Bot đang suy nghĩ...</span>
         </div>
 
         <!-- INPUT -->
@@ -63,7 +53,6 @@
                 const form = document.getElementById('chat-form');
                 const input = document.getElementById('message-input');
                 const sendButton = document.getElementById('send-button');
-                const typingIndicator = document.getElementById('typing-indicator');
 
                 const scrollToBottom = () => {
                     if (chatBox) {
@@ -180,23 +169,22 @@
                         input.readOnly = true;
                         input.classList.add('disabled-input');
 
-                        if (typingIndicator) {
-                            typingIndicator.classList.remove('d-none');
-                        }
-
+                        // Append a proper bot-message bubble with the 3-dot animation
                         const loadingItem = document.createElement('div');
                         loadingItem.className = 'chat-message bot-message loading';
-                        loadingItem.innerHTML = '<span class="badge bg-secondary">Bot</span>' +
-                            '<div class="bubble bubble-loading">' +
-                            '<span class="dot"></span><span class="dot"></span><span class="dot"></span>' +
+                        loadingItem.id = 'chat-loading-bubble';
+                        loadingItem.innerHTML =
+                            '<div class="message-meta">' +
+                                '<span class="badge bg-secondary">Bot</span>' +
                             '</div>' +
-                            '<div class="message-status">Đang gửi...</div>';
+                            '<div class="bubble bubble-loading" aria-label="Bot đang trả lời" role="status">' +
+                                '<span class="dot"></span>' +
+                                '<span class="dot"></span>' +
+                                '<span class="dot"></span>' +
+                            '</div>' +
+                            '<div class="message-status">Đang soạn trả lời...</div>';
                         chatBox.appendChild(loadingItem);
                         scrollToBottom();
-
-                        if (window.skeletonLoader) {
-                            window.skeletonLoader.skipOnUnload = true;
-                        }
 
                         window.requestAnimationFrame(() => {
                             setTimeout(() => form.submit(), 50);
