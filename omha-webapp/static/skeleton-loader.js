@@ -92,26 +92,48 @@ class SkeletonLoader {
 document.addEventListener('DOMContentLoaded', function () {
     window.skeletonLoader = new SkeletonLoader();
     window.skeletonLoader.init();
+    window.skeletonLoader.skipOnUnload = false;
 
-    // Show skeleton on navigation links
-    document.querySelectorAll('a[href*="#"]').forEach(link => {
+    // Show skeleton on internal navigation links
+    document.querySelectorAll('a[href]').forEach(link => {
         link.addEventListener('click', function (e) {
-            // Don't show loader for anchor links
-            if (this.getAttribute('href').startsWith('#')) {
+            const href = this.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) {
                 return;
+            }
+            if (this.target && this.target !== '_self') {
+                return;
+            }
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+                return;
+            }
+            if (window.skeletonLoader) {
+                window.skeletonLoader.showWithDelay(50);
             }
         });
     });
 
-    // Show skeleton on form submissions that navigate
+    // Show skeleton on form submissions that navigate, except chatbot response submissions
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', function () {
-            // Only show if form action navigates away
-            if (this.getAttribute('action') && 
-                !this.getAttribute('action').includes('#')) {
-                window.skeletonLoader.showWithDelay(100);
+            if (this.id === 'chat-form') {
+                if (window.skeletonLoader) {
+                    window.skeletonLoader.skipOnUnload = true;
+                }
+                return;
+            }
+            if (this.getAttribute('action') && !this.getAttribute('action').includes('#')) {
+                if (window.skeletonLoader) {
+                    window.skeletonLoader.showWithDelay(100);
+                }
             }
         });
+    });
+
+    window.addEventListener('beforeunload', function () {
+        if (window.skeletonLoader && !window.skeletonLoader.skipOnUnload) {
+            window.skeletonLoader.show();
+        }
     });
 });
 

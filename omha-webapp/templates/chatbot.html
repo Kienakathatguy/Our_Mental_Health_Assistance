@@ -194,6 +194,10 @@
                         chatBox.appendChild(loadingItem);
                         scrollToBottom();
 
+                        if (window.skeletonLoader) {
+                            window.skeletonLoader.skipOnUnload = true;
+                        }
+
                         window.requestAnimationFrame(() => {
                             setTimeout(() => form.submit(), 50);
                         });
